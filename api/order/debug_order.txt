@@ -1,0 +1,14 @@
+Array
+(
+    [code] => OD1759511655276
+    [seller_id] => 1
+    [customer_id] => 4
+    [customer_name] => Nguyễn Kỳ Vỹ
+    [phone] => 0813748360
+    [address] => Cổ Thành, Triệu Thành, Triệu Phong, Quảng Trị
+    [note] => oke
+    [total] => 875000
+    [status] => pending
+    [payment_method] => cod
+    [payment_status] => pending
+)
