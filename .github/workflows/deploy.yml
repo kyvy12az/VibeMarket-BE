@@ -3,38 +3,31 @@ name: 🚀 Deploy PHP BE via FTP to komer.id.vn
 on:
   push:
     branches:
-      - main   # hoặc 'master' tùy nhánh bạn đang dùng
+      - main   # Deploy tự động khi push lên nhánh main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Lấy source code
       - name: 🧭 Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: 🧩 Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: 📦 Install dependencies
-        run: npm install
-
-      - name: 🏗️ Build project
-        run: npm run build
-
+      # 2️⃣ Upload toàn bộ mã nguồn PHP qua FTP
       - name: 📂 Upload via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
           port: 21
-          local-dir: ./
+          protocol: ftp     # hoặc ftps nếu host hỗ trợ SSL
+          local-dir: ./     # thư mục chứa mã nguồn PHP (thường là root repo)
           server-dir: /domains/komer.id.vn/public_html/
           exclude: |
             **/.git*
             **/.github*
             **/node_modules/**
+            **/README.md
+            **/.env
