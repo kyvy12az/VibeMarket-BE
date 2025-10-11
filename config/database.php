@@ -6,17 +6,17 @@
 // $pass = 'kyvy19022006';
 // $charset = 'utf8mb4';
 
-// $host = 'localhost';
-// $db   = 'vibemarket_db';
-// $user = 'root';
-// $pass = '';
-// $charset = 'utf8mb4';
-
 $host = 'localhost';
-$db   = 'ha6a3b453c_vibemarket_db';
-$user = 'ha6a3b453c_vibemarket_db';
-$pass = 'ha6a3b453c_vibemarket_db';
+$db   = 'vibemarket_db';
+$user = 'root';
+$pass = '';
 $charset = 'utf8mb4';
+
+// $host = 'localhost';
+// $db   = 'ha6a3b453c_vibemarket_db';
+// $user = 'ha6a3b453c_vibemarket_db';
+// $pass = 'vibemarket_db';
+// $charset = 'utf8mb4';
 
 // Dev/prod config
 $isDev = (isset($_SERVER['HTTP_HOST']) && ($_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], '.test') !== false));
@@ -37,6 +37,16 @@ if (strpos($domain_url, 'localhost') !== false) {
 } else {
     $domain_url = 'https://' . $domain_url;
 }
+
+/**
+ * GitHub OAuth config
+ */
+$Github_ClientID    = "Ov23litV3WecCirGyvxU";
+$Github_SecretKey   = "b5453874ebd32a87cae436400cdf182986be4c09";
+// $Github_RedirectURI = $domain_url . "/api/auth/github_callback.php";
+$Github_RedirectURI = "http://localhost/VIBE_MARKET_BACKEND/VibeMarket-BE/api/auth/github_callback.php";
+$Github_Scope       = "user:email";
+$Github_LoginURL    = "https://github.com/login/oauth/authorize?client_id={$Github_ClientID}&redirect_uri={$Github_RedirectURI}&scope={$Github_Scope}";
 
 // Map GHN order status to Vietnamese
 function GHNOrderStatus($status) {
@@ -81,11 +91,8 @@ function int_headers() {
     // CORS
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $allowedOrigins = [
-        'https://greenmap.talentvku.id.vn',
-        'https://vku-greenmap-nodejs-services.onrender.com',
-        'https://vibe-market-mu.vercel.app',
-        'https://vibemarket.infinityfreeapp.com',
-        'https://komer.id.vn',
+        'https://vibemarket.kyvydev.id.vn',
+        'http://localhost:8080',
     ];
 
     if ($env === 'development') {

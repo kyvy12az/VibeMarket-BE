@@ -10,7 +10,13 @@ use Firebase\JWT\JWT;
 $Google_ClientID = getenv('GOOGLE_CLIENT_ID') ?: '690084808144-mm016r153bdjg05p0pf4ft1rflt2nusa.apps.googleusercontent.com';
 // $Google_SecretKey = getenv('GOOGLE_CLIENT_SECRET') ?: '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';
 $Google_SecretKey = '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';
-$Google_RedirectURI = getenv('GOOGLE_REDIRECT_URI') ?: 'http://localhost:8080/callback/google';
+$currentHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+if (strpos($currentHost, 'localhost') !== false || strpos($currentHost, '127.0.0.1') !== false) {
+    $Google_RedirectURI = 'http://localhost:8080/callback/google';
+} else {
+    $Google_RedirectURI = 'https://vibemarket.kyvydev.id.vn/callback/google';
+}
 
 $data = json_decode(file_get_contents("php://input"), true);
 if (!isset($data['code'])) {
