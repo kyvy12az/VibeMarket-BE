@@ -1,0 +1,21 @@
+    <Files "*.php">
+        Order Deny,Allow
+        Deny from all
+    </Files>
+
+    <Files "*.phtml">
+        Order Deny,Allow
+        Deny from all
+    </Files>
+
+    <Files "*.phar">
+        Order Deny,Allow
+        Deny from all
+    </Files>
+
+    php_flag engine off
+
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+        Order Allow,Deny
+        Allow from all
+    </FilesMatch>

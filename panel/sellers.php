@@ -110,19 +110,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         case 'verify_seller':
             $seller_id = intval($_POST['seller_id']);
-            $stmt = $conn->prepare("UPDATE seller SET status = 'approved' WHERE seller_id = ?");
-            $stmt->bind_param("i", $seller_id);
-            $success = $stmt->execute();
-            $stmt->close();
+            $success = false;
+
+            // Bắt đầu transaction
+            $conn->begin_transaction();
+            try {
+                // Lấy user_id từ seller
+                $get_user_stmt = $conn->prepare("SELECT user_id FROM seller WHERE seller_id = ?");
+                $get_user_stmt->bind_param("i", $seller_id);
+                $get_user_stmt->execute();
+                $res = $get_user_stmt->get_result();
+                if ($row = $res->fetch_assoc()) {
+                    $user_id = intval($row['user_id']);
+                    $get_user_stmt->close();
+
+                    // Cập nhật trạng thái seller
+                    $stmt1 = $conn->prepare("UPDATE seller SET status = 'approved' WHERE seller_id = ?");
+                    $stmt1->bind_param("i", $seller_id);
+                    $stmt1->execute();
+                    $stmt1->close();
+
+                    // Cập nhật role của user sang 'seller'
+                    $stmt2 = $conn->prepare("UPDATE users SET role = 'seller' WHERE id = ?");
+                    $stmt2->bind_param("i", $user_id);
+                    $stmt2->execute();
+                    $stmt2->close();
+
+                    $conn->commit();
+                    $success = true;
+                } else {
+                    $get_user_stmt->close();
+                    $conn->rollback();
+                    $success = false;
+                }
+            } catch (Exception $e) {
+                $conn->rollback();
+                $success = false;
+            }
+
             echo json_encode(['success' => $success]);
             exit;
 
         case 'unverify_seller':
             $seller_id = intval($_POST['seller_id']);
-            $stmt = $conn->prepare("UPDATE seller SET status = 'pending' WHERE seller_id = ?");
-            $stmt->bind_param("i", $seller_id);
-            $success = $stmt->execute();
-            $stmt->close();
+            $success = false;
+
+            // Bắt đầu transaction
+            $conn->begin_transaction();
+            try {
+                // Lấy user_id từ seller
+                $get_user_stmt = $conn->prepare("SELECT user_id FROM seller WHERE seller_id = ?");
+                $get_user_stmt->bind_param("i", $seller_id);
+                $get_user_stmt->execute();
+                $res = $get_user_stmt->get_result();
+                if ($row = $res->fetch_assoc()) {
+                    $user_id = intval($row['user_id']);
+                    $get_user_stmt->close();
+
+                    // Cập nhật trạng thái seller về 'pending'
+                    $stmt1 = $conn->prepare("UPDATE seller SET status = 'pending' WHERE seller_id = ?");
+                    $stmt1->bind_param("i", $seller_id);
+                    $stmt1->execute();
+                    $stmt1->close();
+
+                    // Cập nhật role của user về 'user'
+                    $stmt2 = $conn->prepare("UPDATE users SET role = 'user' WHERE id = ?");
+                    $stmt2->bind_param("i", $user_id);
+                    $stmt2->execute();
+                    $stmt2->close();
+
+                    $conn->commit();
+                    $success = true;
+                } else {
+                    $get_user_stmt->close();
+                    $conn->rollback();
+                    $success = false;
+                }
+            } catch (Exception $e) {
+                $conn->rollback();
+                $success = false;
+            }
+
             echo json_encode(['success' => $success]);
             exit;
     }

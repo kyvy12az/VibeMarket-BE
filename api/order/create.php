@@ -1,5 +1,13 @@
 <?php
 require_once '../../config/database.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+$mailConfig = require_once __DIR__ . '/../../config/mail.php';
+
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -102,6 +110,144 @@ try {
     }
 
     $conn->commit();
+
+    // Send order confirmation email only for COD orders
+    $toEmail = $email; // from earlier in file
+    $paymentMethod = strtolower($data['payment_method'] ?? '');
+    if ($toEmail && $paymentMethod === 'cod') {
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host = $mailConfig['host'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $mailConfig['username'];
+            $mail->Password = $mailConfig['password'];
+            $mail->SMTPSecure = $mailConfig['secure'];
+            $mail->Port = $mailConfig['port'];
+
+            $mail->CharSet = 'UTF-8';
+            $mail->setFrom($mailConfig['from_email'], $mailConfig['from_name']);
+            $mail->addAddress($toEmail, $data['fullName'] ?? '');
+
+            $mail->isHTML(true);
+            $mail->Subject = "Xác nhận đơn hàng #{$code}";
+
+            // build products HTML (fetch product names from DB if product_id provided)
+            $productIds = [];
+            foreach ($data['products'] as $it) {
+                if (!empty($it['id'])) $productIds[] = intval($it['id']);
+            }
+            $productNames = [];
+            if (count($productIds) > 0) {
+                $ids = implode(',', array_unique($productIds));
+                $res = $conn->query("SELECT id, name FROM products WHERE id IN ($ids)");
+                if ($res) {
+                    while ($row = $res->fetch_assoc()) {
+                        $productNames[intval($row['id'])] = $row['name'];
+                    }
+                    $res->free();
+                }
+            }
+
+            $productsHtml = '';
+            $itemsTotal = 0;
+            foreach ($data['products'] as $item) {
+                $pId = isset($item['id']) ? intval($item['id']) : 0;
+                $rawName = $productNames[$pId] ?? ($item['name'] ?? ($item['title'] ?? 'Sản phẩm'));
+                $pName = htmlspecialchars($rawName);
+                $qty = intval($item['quantity'] ?? 1);
+                $price = intval($item['price'] ?? 0);
+                $subtotal = $qty * $price;
+                $itemsTotal += $subtotal;
+
+                $productsHtml .= '<tr>
+                    <td style="padding:8px 6px;border-bottom:1px solid #f1f5f9;">' . $pName . '</td>
+                    <td style="padding:8px 6px;border-bottom:1px solid #f1f5f9;text-align:center;">' . $qty . '</td>
+                    <td style="padding:8px 6px;border-bottom:1px solid #f1f5f9;text-align:right;">' . number_format($price) . '₫</td>
+                    <td style="padding:8px 6px;border-bottom:1px solid #f1f5f9;text-align:right;">' . number_format($subtotal) . '₫</td>
+                </tr>';
+            }
+
+            // chuẩn hóa dữ liệu hiển thị
+            $customerName = htmlspecialchars($data['fullName'] ?? '');
+            $phoneEsc = htmlspecialchars($data['phone'] ?? '');
+            $addressEsc = htmlspecialchars($data['address'] ?? '');
+            $amountFormatted = number_format(intval($data['total'])) . '₫';
+            $paymentMethodEsc = htmlspecialchars($data['payment_method'] ?? '');
+            $orderLink = rtrim($mailConfig['frontend_base'], '/') . "/orders/{$code}";
+
+            $body = <<<HTML
+            <div style="font-family:'Inter',Roboto,Arial,sans-serif;color:#111;max-width:680px;margin:0 auto;background:#f9fafc;">
+                <!-- Header -->
+                <div style="background:linear-gradient(90deg,#8b5cf6,#d946ef,#06b6d4);padding:24px 20px;border-radius:12px 12px 0 0;color:#fff;text-align:center;box-shadow:0 3px 6px rgba(0,0,0,0.08);">
+                    <h1 style="margin:0;font-size:22px;letter-spacing:-0.5px;">VibeMarket</h1>
+                    <p style="margin:6px 0 0;font-size:15px;opacity:.95;">Xác nhận đơn hàng của bạn</p>
+                </div>
+
+                <!-- Body -->
+                <div style="background:#fff;border:1px solid #eceef3;border-top:0;padding:24px 20px;border-radius:0 0 12px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                    <p style="margin:0 0 8px;">Xin chào <strong>{$customerName}</strong>,</p>
+                    <p style="margin:0 0 12px;line-height:1.6;">Cảm ơn bạn đã đặt hàng tại <strong>VibeMarket</strong>! Mã đơn hàng của bạn là <strong style="color:#8b5cf6;">{$code}</strong>.</p>
+
+                    <!-- Shipping info -->
+                    <div style="margin-bottom:16px;">
+                    <strong style="font-size:15px;">Thông tin giao hàng</strong>
+                    <div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.6;">
+                        <div>Số điện thoại: {$phoneEsc}</div>
+                        <div>Địa chỉ: {$addressEsc}</div>
+                    </div>
+                    </div>
+
+                    <!-- Product list -->
+                    <div style="margin:16px 0;">
+                    <strong style="font-size:15px;">Chi tiết sản phẩm</strong>
+                    <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;">
+                        <thead>
+                        <tr style="text-align:left;color:#6b7280;font-size:13px;border-bottom:1px solid #eee;">
+                            <th style="padding:8px 6px 8px 0;">Sản phẩm</th>
+                            <th style="padding:8px 6px;text-align:center;">SL</th>
+                            <th style="padding:8px 6px;text-align:right;">Giá</th>
+                            <th style="padding:8px 6px;text-align:right;">Tổng</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {$productsHtml}
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <!-- Total & payment -->
+                    <div style="margin-top:16px; font-size:15px;">
+                        <div style="color:#6b7280;">Phương thức thanh toán: <strong>Thanh toán tiền mặt</strong></div>
+                        <div style="font-weight:700; font-size:17px; color:#d946ef; margin-top:6px;">Tổng thanh toán: {$amountFormatted}</div>
+                    </div>
+
+
+                    <!-- Button -->
+                    <div style="text-align:center;margin-top:22px;">
+                    <a href="{$orderLink}" style="display:inline-block;padding:12px 22px;background:linear-gradient(90deg,#8b5cf6,#d946ef,#06b6d4);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;box-shadow:0 3px 10px rgba(139,92,246,0.3);transition:all .2s ease;">
+                        Xem chi tiết đơn hàng
+                    </a>
+                    </div>
+
+                    <!-- Footer -->
+                    <p style="margin:24px 0 0;color:#6b7280;font-size:13px;text-align:center;line-height:1.5;">
+                    Cảm ơn bạn đã tin tưởng <strong>VibeMarket</strong>!<br>
+                    Chúc bạn một ngày thật rực rỡ 💜
+                    </p>
+                </div>
+                </div>
+            HTML;
+
+            $mail->Body = $body;
+            $mail->AltBody = strip_tags(str_replace("</p>", "\n", $body));
+            $mail->send();
+        } catch (Exception $e) {
+            error_log("Order mail error for {$code}: " . $e->getMessage());
+            // không rollback order vì lỗi gửi mail
+        }
+    }
+
     echo json_encode(['success' => true, 'order_id' => $order_id, 'code' => $code, 'id' => $order_id]);
 } catch (Exception $e) {
     $conn->rollback();

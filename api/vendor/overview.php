@@ -3,6 +3,10 @@ require_once '../../config/database.php';
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=utf-8");
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
 if (!$user_id) {
     echo json_encode(['error' => 'Thiếu user_id']);
@@ -56,6 +60,7 @@ $res = $conn->query("
     JOIN order_items oi ON oi.order_id = o.id
     WHERE oi.seller_id = $seller_id
 ");
+$totalCustomers = $res && $res->num_rows > 0 ? (int)$res->fetch_assoc()['total'] : 0;
 
 echo json_encode([
     'seller_id' => $seller_id,
