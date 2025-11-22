@@ -1,17 +1,29 @@
 <?php
 require_once '../../config/database.php';
-header("Content-Type: application/json; charset=utf-8");
-header("Access-Control-Allow-Origin: *");
+require_once '../../config/jwt.php';
+
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: http://localhost:8080");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-$body = json_decode(file_get_contents('php://input'), true);
-$postId = intval($body['post_id'] ?? 0);
-$userId = intval($body['user_id'] ?? 0);
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { http_response_code(200); exit; }
 
-if (!$postId || !$userId) {
-    echo json_encode(['success' => false, 'message' => 'Missing post_id or user_id']);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+$body   = json_decode(file_get_contents("php://input"), true);
+$postId = intval($body["post_id"] ?? 0);
+
+$userId = get_user_id_from_token();
+if (!$userId) {
+    echo json_encode(["success" => false, "message" => "Invalid token"]);
+    exit;
+}
+
+if (!$postId) {
+    echo json_encode(["success" => false, "message" => "Missing post_id"]);
     exit;
 }
 
@@ -22,20 +34,17 @@ $res = $check->get_result();
 
 if ($res->num_rows > 0) {
     $row = $res->fetch_assoc();
+
     $del = $conn->prepare("DELETE FROM post_likes WHERE id = ?");
-    $del->bind_param("i", $row['id']);
+    $del->bind_param("i", $row["id"]);
     $del->execute();
 
-    echo json_encode(['success' => true, 'liked' => false]);
-} else {
-    $ins = $conn->prepare("INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)");
-    $ins->bind_param("ii", $postId, $userId);
-    $ok = $ins->execute();
-
-    if ($ok) {
-        // log activity
-        $conn->query("INSERT INTO activity_logs (user_id, type, reference_id) VALUES ($userId, 'like', $postId)");
-    }
-
-    echo json_encode(['success' => $ok, 'liked' => true]);
+    echo json_encode(["success" => true, "liked" => false]);
+    exit;
 }
+
+$ins = $conn->prepare("INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)");
+$ins->bind_param("ii", $postId, $userId);
+$ok = $ins->execute();
+
+echo json_encode(["success" => $ok, "liked" => true]);

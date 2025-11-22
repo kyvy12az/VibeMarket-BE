@@ -1,38 +1,28 @@
 <?php
 require_once '../../config/database.php';
-header("Content-Type: application/json; charset=utf-8");
+require_once '../../config/jwt.php';
+
+header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
-$body   = json_decode(file_get_contents('php://input'), true);
-$postId = intval($body['post_id'] ?? 0);
-$userId = intval($body['user_id'] ?? 0);
-$reason = trim($body['reason'] ?? '');
+$body   = json_decode(file_get_contents("php://input"), true);
+$postId = intval($body["post_id"] ?? 0);
+$reason = trim($body["reason"] ?? '');
 
-if (!$postId || !$userId) {
-    echo json_encode(['success' => false, 'message' => 'Missing post_id or user_id']);
+$userId = get_user_id_from_token();
+if (!$userId) {
+    echo json_encode(["success" => false, "message" => "Invalid token"]);
     exit;
 }
 
-if ($reason === '') {
-    $reason = 'Người dùng không ghi lý do';
-}
-
-$check = $conn->prepare("SELECT id FROM post_reports WHERE post_id = ? AND user_id = ? LIMIT 1");
-$check->bind_param("ii", $postId, $userId);
-$check->execute();
-if ($check->get_result()->num_rows > 0) {
-    echo json_encode(['success' => true, 'message' => 'Bạn đã báo cáo bài viết này rồi']);
-    exit;
-}
+if (!$reason) $reason = "Không ghi lý do";
 
 $stmt = $conn->prepare("INSERT INTO post_reports (post_id, user_id, reason) VALUES (?, ?, ?)");
 $stmt->bind_param("iis", $postId, $userId, $reason);
-$ok = $stmt->execute();
+$stmt->execute();
 
-echo json_encode([
-    'success' => $ok,
-    'message' => $ok ? 'Đã gửi báo cáo' : 'Không thể gửi báo cáo'
-]);
+echo json_encode(["success" => true, "message" => "Đã gửi báo cáo"]);
