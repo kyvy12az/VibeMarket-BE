@@ -73,7 +73,6 @@ $conn->close();
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h1 class="h3 mb-0"><strong>Dashboard</strong></h1>
                     </div>
-                    <!-- Thống kê tổng quan -->
                     <div class="row">
                         <div class="col-xl-4 col-md-4 d-flex">
                             <div class="card illustration flex-fill">
