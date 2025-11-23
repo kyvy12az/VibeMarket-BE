@@ -34,14 +34,19 @@ if ($liked) {
     $delete->execute();
 
     $conn->query("UPDATE post_comments SET likes_count = likes_count - 1 WHERE id = {$commentId}");
-
-    echo json_encode(["success" => true, "liked" => false]);
 } else {
     $insert = $conn->prepare("INSERT INTO comment_likes (user_id, comment_id) VALUES (?, ?)");
     $insert->bind_param("ii", $userId, $commentId);
     $insert->execute();
 
     $conn->query("UPDATE post_comments SET likes_count = likes_count + 1 WHERE id = {$commentId}");
-
-    echo json_encode(["success" => true, "liked" => true]);
 }
+
+$count = $conn->query("SELECT likes_count FROM post_comments WHERE id = {$commentId}")
+              ->fetch_assoc()['likes_count'];
+
+echo json_encode([
+    "success" => true,
+    "liked" => !$liked,
+    "likes_count" => (int)$count
+]);
