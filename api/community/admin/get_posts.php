@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once '../../config/database.php';
+require_once __DIR__ . '/../../../config/database.php';
 header("Content-Type: application/json; charset=utf-8");
 
 $draw = intval($_POST['draw'] ?? 1);
