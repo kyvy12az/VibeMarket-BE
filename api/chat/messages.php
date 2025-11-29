@@ -15,7 +15,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 int_headers();
-checkRateLimit(5, 10);
+checkRateLimit(30, 60, 'messages'); // 30 requests per minute
 
 // Xác thực JWT
 $headers = getallheaders();

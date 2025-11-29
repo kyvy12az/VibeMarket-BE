@@ -25,7 +25,7 @@ require_once '../../../config/database.php';
 
 // --- CONFIG - thay bằng giá trị thật của bạn ---
 $vnp_TmnCode    = "RNDYZYEE";
-$vnp_HashSecret = "BFTAPNWWCD2A9KY7TCX4YYEMWZI5H7HJ";
+$vnp_HashSecret = "80T1F6UGLDVDQY5A152975JEUE3B532C";
 $vnp_Url        = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 $vnp_Returnurl  = "http://localhost/VIBE_MARKET_BACKEND/VibeMarket-BE/api/payment/vnpay/callback.php";
 // -------------------------------------------------
@@ -46,6 +46,8 @@ $bankCode = trim($input['bankCode'] ?? '');
 $locale = trim($input['locale'] ?? 'vn');
 
 $client_ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+if ($client_ip === '::1') $client_ip = '127.0.0.1'; // Fix IPv6 localhost
+
 $vnp_TxnRef = $orderCode;
 $vnp_CreateDate = date('YmdHis');
 $vnp_ExpireDate = date('YmdHis', time() + 15*60); // 15 minutes
@@ -70,18 +72,24 @@ if ($bankCode !== '') $vnp_Params['vnp_BankCode'] = $bankCode;
 
 ksort($vnp_Params);
 
-// build hashdata and query using urlencode for query; use same pattern for hash (consistent with IPN)
-$hashdata = [];
-$query = [];
+// Build hash data and query string (theo tài liệu VNPay)
+// hashData: urlencode(key)=urlencode(value)&... (CÓ encode theo docs)
+// query: urlencode(key)=urlencode(value)& (CÓ encode)
+$hashData = "";
+$query = "";
+$i = 0;
 foreach ($vnp_Params as $key => $value) {
-    $hashdata[] = urlencode($key) . "=" . urlencode($value);
-    $query[] = urlencode($key) . "=" . urlencode($value);
+    if ($i == 1) {
+        $hashData .= '&' . urlencode($key) . "=" . urlencode($value);
+    } else {
+        $hashData .= urlencode($key) . "=" . urlencode($value);
+        $i = 1;
+    }
+    $query .= urlencode($key) . "=" . urlencode($value) . '&';
 }
-$hashData = implode('&', $hashdata);
-$vnp_SecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
 
-$queryString = implode('&', $query);
-$payUrl = $vnp_Url . '?' . $queryString . '&vnp_SecureHash=' . $vnp_SecureHash;
+$vnp_SecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+$payUrl = $vnp_Url . '?' . $query . 'vnp_SecureHash=' . $vnp_SecureHash;
 
 // Optionally log pending transaction
 try {
@@ -109,5 +117,12 @@ try {
 }
 
 ob_end_clean();
-echo json_encode(['success' => true, 'payUrl' => $payUrl, 'txnRef' => $vnp_TxnRef, 'expire' => $vnp_ExpireDate]);
+echo json_encode([
+    'success' => true, 
+    'payUrl' => $payUrl, 
+    'txnRef' => $vnp_TxnRef, 
+    'orderCode' => $orderCode,
+    'amount' => $amount,
+    'expire' => $vnp_ExpireDate
+]);
 

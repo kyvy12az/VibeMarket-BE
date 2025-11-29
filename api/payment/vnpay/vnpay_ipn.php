@@ -11,7 +11,7 @@
  */
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 $vnp_TmnCode = "RNDYZYEE"; //Mã định danh merchant kết nối (Terminal Id)
-$vnp_HashSecret = "BFTAPNWWCD2A9KY7TCX4YYEMWZI5H7HJ"; //Secret key
+$vnp_HashSecret = "80T1F6UGLDVDQY5A152975JEUE3B532C"; //Secret key
 $vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 $vnp_Returnurl = "http://localhost/vnpay_php/vnpay_return.php";
 $vnp_apiUrl = "http://sandbox.vnpayment.vn/merchant_webapi/merchant.html";

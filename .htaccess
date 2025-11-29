@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Forward Authorization header
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+# Existing rules...

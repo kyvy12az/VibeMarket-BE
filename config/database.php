@@ -93,6 +93,7 @@ function int_headers() {
     $allowedOrigins = [
         'https://vibemarket.kyvydev.id.vn',
         'http://localhost:8080',
+        'https://komer.id.vn',
     ];
 
     if ($env === 'development') {

@@ -7,7 +7,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
-$vnp_HashSecret = "BFTAPNWWCD2A9KY7TCX4YYEMWZI5H7HJ";
+$vnp_HashSecret = "80T1F6UGLDVDQY5A152975JEUE3B532C";
 
 // Lấy các tham số từ VNPay redirect
 $vnpData = [];
@@ -20,13 +20,17 @@ if (isset($vnpData['vnp_SecureHash'])) unset($vnpData['vnp_SecureHash']);
 if (isset($vnpData['vnp_SecureHashType'])) unset($vnpData['vnp_SecureHashType']);
 
 ksort($vnpData);
-$hashParts = [];
-foreach ($vnpData as $key => $val) {
-    if ($val === null || $val === '') continue;
-    $hashParts[] = urlencode($key) . '=' . urlencode($val);
+$i = 0;
+$hashData = "";
+foreach ($vnpData as $key => $value) {
+    if ($i == 1) {
+        $hashData .= '&' . urlencode($key) . "=" . urlencode($value);
+    } else {
+        $hashData .= urlencode($key) . "=" . urlencode($value);
+        $i = 1;
+    }
 }
-$hashData = implode('&', $hashParts);
-$secureHashComputed = hash_hmac('sha512', $hashData, trim($vnp_HashSecret));
+$secureHashComputed = hash_hmac('sha512', $hashData, $vnp_HashSecret);
 
 // So sánh chữ ký
 if (!hash_equals(strtolower($secureHashComputed), strtolower($vnpSecureHash))) {

@@ -8,30 +8,37 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 int_headers();
+checkRateLimit(30, 60, 'conversations'); // 30 requests per minute
 
-checkRateLimit(5, 10);
-
-// Xác thực JWT
+// **FIX: Debug log headers**
 $headers = getallheaders();
+error_log("Conversations.php - Received headers: " . print_r($headers, true));
+
 if (!isset($headers['Authorization'])) {
+    error_log("Conversations.php - Missing Authorization header");
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Thiếu token']);
+    echo json_encode(['success' => false, 'message' => 'Thiếu token', 'debug' => 'No Authorization header']);
     exit;
 }
 
-if (!preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+if (!preg_match('/Bearer\s+(\S+)/', $headers['Authorization'], $matches)) {
+    error_log("Conversations.php - Invalid Authorization format: " . $headers['Authorization']);
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Token không hợp lệ']);
+    echo json_encode(['success' => false, 'message' => 'Token không hợp lệ', 'debug' => 'Invalid Bearer format']);
     exit;
 }
 
 $jwt = $matches[1];
+error_log("Conversations.php - Extracted JWT: " . substr($jwt, 0, 20) . "...");
+
 try {
     $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
     $user_id = $decoded->sub;
+    error_log("Conversations.php - Decoded user_id: " . $user_id);
 } catch (Exception $e) {
+    error_log("Conversations.php - JWT decode error: " . $e->getMessage());
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Token hết hạn']);
+    echo json_encode(['success' => false, 'message' => 'Token hết hạn', 'debug' => $e->getMessage()]);
     exit;
 }
 
@@ -59,6 +66,9 @@ function getUserConversations($conn, $user_id)
                 c.type,
                 c.name,
                 c.avatar,
+                c.background_color,
+                c.message_color,
+                c.message_text_color,
                 c.created_at,
                 c.updated_at,
                 (SELECT COUNT(*) FROM messages m 
@@ -84,6 +94,9 @@ function getUserConversations($conn, $user_id)
             'type' => $row['type'],
             'name' => $row['name'],
             'avatar' => $row['avatar'],
+            'background_color' => $row['background_color'],
+            'message_color' => $row['message_color'], // Add this
+            'message_text_color' => $row['message_text_color'], // Add this
             'unreadCount' => (int)$row['unread_count'],
             'isGroup' => $row['type'] === 'group',
             'participants' => getConversationParticipants($conn, $row['id'], $user_id),
