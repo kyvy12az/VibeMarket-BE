@@ -44,6 +44,7 @@ curl_close($ch);
 
 $user = json_decode($user_info, true);
 
+
 if (empty($user['id']) || empty($user['login'])) {
     header('Location: /VIBE_MARKET_BACKEND/VibeMarket-BE/panel/login.php?msg=invalid_user');
     exit;
