@@ -118,3 +118,63 @@ DECODED = Array
     [role] => user
 )
 
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsIm5hbWUiOiJOZ3V5XHUxZWM1biBLXHUxZWYzIFZcdTFlZjkiLCJlbWFpbCI6InZ5bmd1eWVuMTJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjQyOTY5NTksImV4cCI6MTc2NDkwMTc1OSwiaXNzIjoiVmliZU1hcmtldCJ9.Y3WgcYcG28AQ-dMf_3N3uqorMeszEl4vYuXbZCJDHos
+DECODED = Array
+(
+    [sub] => 1
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => vynguyen12@gmail.com
+    [role] => user
+    [iat] => 1764296959
+    [exp] => 1764901759
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsIm5hbWUiOiJOZ3V5XHUxZWM1biBLXHUxZWYzIFZcdTFlZjkiLCJlbWFpbCI6InZ5bmd1eWVuMTJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjQyOTY5NTksImV4cCI6MTc2NDkwMTc1OSwiaXNzIjoiVmliZU1hcmtldCJ9.Y3WgcYcG28AQ-dMf_3N3uqorMeszEl4vYuXbZCJDHos
+DECODED = Array
+(
+    [sub] => 1
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => vynguyen12@gmail.com
+    [role] => user
+    [iat] => 1764296959
+    [exp] => 1764901759
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsIm5hbWUiOiJOZ3V5XHUxZWM1biBLXHUxZWYzIFZcdTFlZjkiLCJlbWFpbCI6InZ5bmd1eWVuMTJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjQyOTY5NTksImV4cCI6MTc2NDkwMTc1OSwiaXNzIjoiVmliZU1hcmtldCJ9.Y3WgcYcG28AQ-dMf_3N3uqorMeszEl4vYuXbZCJDHos
+DECODED = Array
+(
+    [sub] => 1
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => vynguyen12@gmail.com
+    [role] => user
+    [iat] => 1764296959
+    [exp] => 1764901759
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsIm5hbWUiOiJOZ3V5XHUxZWM1biBLXHUxZWYzIFZcdTFlZjkiLCJlbWFpbCI6InZ5bmd1eWVuMTJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjQyOTY5NTksImV4cCI6MTc2NDkwMTc1OSwiaXNzIjoiVmliZU1hcmtldCJ9.Y3WgcYcG28AQ-dMf_3N3uqorMeszEl4vYuXbZCJDHos
+DECODED = Array
+(
+    [sub] => 1
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => vynguyen12@gmail.com
+    [role] => user
+    [iat] => 1764296959
+    [exp] => 1764901759
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsIm5hbWUiOiJOZ3V5XHUxZWM1biBLXHUxZWYzIFZcdTFlZjkiLCJlbWFpbCI6InZ5bmd1eWVuMTJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjQyOTY5NTksImV4cCI6MTc2NDkwMTc1OSwiaXNzIjoiVmliZU1hcmtldCJ9.Y3WgcYcG28AQ-dMf_3N3uqorMeszEl4vYuXbZCJDHos
+DECODED = Array
+(
+    [sub] => 1
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => vynguyen12@gmail.com
+    [role] => user
+    [iat] => 1764296959
+    [exp] => 1764901759
+    [iss] => VibeMarket
+)
+

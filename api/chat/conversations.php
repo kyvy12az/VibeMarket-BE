@@ -61,6 +61,11 @@ try {
 
 function getUserConversations($conn, $user_id)
 {
+    // Get filter parameters from query string
+    $category = isset($_GET['category']) ? $_GET['category'] : null;
+    $seller_id = isset($_GET['seller_id']) ? intval($_GET['seller_id']) : null;
+    $as_seller = isset($_GET['as_seller']) && $_GET['as_seller'] === 'true';
+
     $sql = "SELECT DISTINCT
                 c.id,
                 c.type,
@@ -69,6 +74,11 @@ function getUserConversations($conn, $user_id)
                 c.background_color,
                 c.message_color,
                 c.message_text_color,
+                c.conversation_category,
+                c.seller_id,
+                s.store_name,
+                s.avatar as seller_avatar,
+                s.user_id as seller_user_id,
                 c.created_at,
                 c.updated_at,
                 (SELECT COUNT(*) FROM messages m 
@@ -79,8 +89,28 @@ function getUserConversations($conn, $user_id)
                  ) AND m.sender_id != ?) as unread_count
             FROM conversations c
             INNER JOIN conversation_participants cp ON c.id = cp.conversation_id
-            WHERE cp.user_id = ? AND cp.left_at IS NULL
-            ORDER BY c.updated_at DESC";
+            LEFT JOIN seller s ON c.seller_id = s.seller_id
+            WHERE cp.user_id = ? AND cp.left_at IS NULL";
+    
+    // Filter for seller's shop conversations
+    if ($as_seller) {
+        // Get conversations where user is the seller (shop owner viewing customer messages)
+        $sql .= " AND c.conversation_category = 'shop' AND s.user_id = " . intval($user_id);
+    } else {
+        // Add category filter if specified (for customer side)
+        if ($category === 'shop') {
+            $sql .= " AND c.conversation_category = 'shop'";
+        } elseif ($category === 'user') {
+            $sql .= " AND (c.conversation_category = 'user' OR c.conversation_category IS NULL)";
+        }
+        
+        // Add seller_id filter if specified
+        if ($seller_id) {
+            $sql .= " AND c.seller_id = " . intval($seller_id);
+        }
+    }
+    
+    $sql .= " ORDER BY c.updated_at DESC";
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('iii', $user_id, $user_id, $user_id);
@@ -95,10 +125,16 @@ function getUserConversations($conn, $user_id)
             'name' => $row['name'],
             'avatar' => $row['avatar'],
             'background_color' => $row['background_color'],
-            'message_color' => $row['message_color'], // Add this
-            'message_text_color' => $row['message_text_color'], // Add this
+            'message_color' => $row['message_color'],
+            'message_text_color' => $row['message_text_color'],
+            'conversation_category' => $row['conversation_category'] ?? 'user',
+            'seller_id' => $row['seller_id'] ? (int)$row['seller_id'] : null,
+            'seller_user_id' => $row['seller_user_id'] ? (int)$row['seller_user_id'] : null,
+            'store_name' => $row['store_name'] ?? null,
+            'seller_avatar' => $row['seller_avatar'] ?? null,
             'unreadCount' => (int)$row['unread_count'],
             'isGroup' => $row['type'] === 'group',
+            'isShopChat' => $row['conversation_category'] === 'shop',
             'participants' => getConversationParticipants($conn, $row['id'], $user_id),
             'lastMessage' => getLastMessage($conn, $row['id'])
         ];
@@ -176,6 +212,8 @@ function createConversation($conn, $user_id)
     $participants = $input['participants'];
     $name = $input['name'] ?? null;
     $avatar = $input['avatar'] ?? null;
+    $conversation_category = $input['conversation_category'] ?? 'user';
+    $seller_id = isset($input['seller_id']) ? intval($input['seller_id']) : null;
 
     if (!in_array($user_id, $participants)) {
         $participants[] = $user_id;
@@ -186,9 +224,15 @@ function createConversation($conn, $user_id)
     }
 
     if ($type === 'private') {
-        $existing = checkExistingPrivateConversation($conn, $participants);
+        $existing = checkExistingPrivateConversation($conn, $participants, $conversation_category, $seller_id);
         if ($existing) {
-            throw new Exception('Đã có cuộc trò chuyện riêng tư với người này');
+            // Return existing conversation instead of error
+            echo json_encode([
+                'success' => true,
+                'data' => ['id' => $existing],
+                'message' => 'Conversation already exists'
+            ]);
+            return;
         }
     }
 
@@ -196,9 +240,9 @@ function createConversation($conn, $user_id)
 
     try {
         // Tạo conversation
-        $sql = "INSERT INTO conversations (type, name, avatar, created_by) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO conversations (type, name, avatar, created_by, conversation_category, seller_id) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('sssi', $type, $name, $avatar, $user_id);
+        $stmt->bind_param('sssisi', $type, $name, $avatar, $user_id, $conversation_category, $seller_id);
         $stmt->execute();
         $conversation_id = $conn->insert_id;
 
@@ -224,17 +268,29 @@ function createConversation($conn, $user_id)
     }
 }
 
-function checkExistingPrivateConversation($conn, $participants)
+function checkExistingPrivateConversation($conn, $participants, $conversation_category = 'user', $seller_id = null)
 {
     $sql = "SELECT c.id FROM conversations c
             WHERE c.type = 'private' 
-            AND (SELECT COUNT(*) FROM conversation_participants cp 
+            AND c.conversation_category = ?";
+    
+    if ($seller_id) {
+        $sql .= " AND c.seller_id = ?";
+    }
+    
+    $sql .= " AND (SELECT COUNT(*) FROM conversation_participants cp 
                  WHERE cp.conversation_id = c.id 
                  AND cp.user_id IN (?, ?) 
                  AND cp.left_at IS NULL) = 2";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ii', $participants[0], $participants[1]);
+    
+    if ($seller_id) {
+        $stmt->bind_param('siii', $conversation_category, $seller_id, $participants[0], $participants[1]);
+    } else {
+        $stmt->bind_param('sii', $conversation_category, $participants[0], $participants[1]);
+    }
+    
     $stmt->execute();
     $result = $stmt->get_result();
 

@@ -48,6 +48,22 @@ $Github_RedirectURI = "http://localhost/VIBE_MARKET_BACKEND/VibeMarket-BE/api/au
 $Github_Scope       = "user:email";
 $Github_LoginURL    = "https://github.com/login/oauth/authorize?client_id={$Github_ClientID}&redirect_uri={$Github_RedirectURI}&scope={$Github_Scope}";
 
+/**
+ * MoMo Payment config
+ */
+$Momo_Endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
+$Momo_PartnerCode = "MOMOBKUN20180529";
+$Momo_AccessKey = "klm05TvNBzhg7h7j";
+$Momo_SecretKey = "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
+
+/**
+ * ZaloPay Payment config
+ */
+$ZaloPay_AppID = "2553"; 
+$ZaloPay_Key1 = "PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL";   
+$ZaloPay_Key2 = "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz";   
+$ZaloPay_Endpoint = "https://sb-openapi.zalopay.vn/v2/create";
+
 // Map GHN order status to Vietnamese
 function GHNOrderStatus($status) {
     $statusMap = [

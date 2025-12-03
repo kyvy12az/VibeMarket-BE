@@ -3,14 +3,10 @@ require_once '../../../config/database.php';
 require_once '../../../vendor/autoload.php';
 require_once '../../../config/jwt.php';
 
-int_headers();
-
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    exit(0);
-}
+int_headers();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -45,6 +41,7 @@ error_log("User ID: " . $user_id);
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
+    error_log("MoMo Pay Input: " . json_encode($input));
 
     if (!$input) {
         throw new Exception('Dữ liệu không hợp lệ');
@@ -61,13 +58,42 @@ try {
         throw new Exception('Đơn hàng không tồn tại');
     }
     $amount = $checkOrder['total'];
+    
+    // Lấy thông tin sản phẩm để tạo mô tả đơn hàng
+    $productNames = [];
+    $orderItemsStmt = $conn->prepare("SELECT oi.*, p.name as product_name FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?");
+    
+    if ($orderItemsStmt) {
+        $orderItemsStmt->bind_param("i", $checkOrder['id']);
+        $orderItemsStmt->execute();
+        $orderItems = $orderItemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        foreach ($orderItems as $item) {
+            $productName = $item['product_name'] ?? 'Sản phẩm';
+            $productNames[] = $productName;
+        }
+    }
+    
+    // Tạo mô tả đơn hàng với tên sản phẩm
+    if (count($productNames) > 0) {
+        if (count($productNames) == 1) {
+            $orderInfo = "Thanh toán đơn hàng: " . $productNames[0];
+        } else {
+            $firstProduct = $productNames[0];
+            $remainingCount = count($productNames) - 1;
+            $orderInfo = "Thanh toán đơn hàng: " . $firstProduct . " và " . $remainingCount . " sản phẩm khác";
+        }
+    } else {
+        $orderInfo = "Thanh toán đơn hàng #" . $orderCode;
+    }
+    
     $requestId = time() . "";
     if (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false) {
         $redirectUrl = "http://localhost:8080/callback/momo";
         $ipnUrl = "http://localhost:8080/callback/momo";
     } else {
-        $redirectUrl = "https://greenmap.talentvku.id.vn/callback/momo";
-        $ipnUrl = "https://greenmap.talentvku.id.vn/callback/momo";
+        $redirectUrl = "https://vibemarket.kyvydev.id.vn/callback/momo";
+        $ipnUrl = "https://vibemarket.kyvydev.id.vn/callback/momo";
     }
 
     $extraData = "";
@@ -113,8 +139,10 @@ try {
     ));
 
     $response = curl_exec($curl);
+    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
     curl_close($curl);
 
+    error_log("MoMo API Response (HTTP $httpCode): " . $response);
     $result = json_decode($response, true);
 
     if ($result && $result['resultCode'] == 0) {

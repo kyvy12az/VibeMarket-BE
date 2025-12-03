@@ -62,12 +62,12 @@ try {
         throw new Exception('Thiếu thông tin bắt buộc');
     }
 
-    $secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
-    $accessKey = "F8BBA842ECF85";
+    // Sử dụng config từ database.php
+    global $Momo_SecretKey, $Momo_AccessKey;
 
-    $rawHash = "accessKey=" . $accessKey . "&amount=" . $amount . "&extraData=" . $extraData . "&message=" . $message . "&orderId=" . $orderId . "&orderInfo=" . $orderInfo . "&orderType=" . $orderType . "&partnerCode=" . $partnerCode . "&payType=" . $payType . "&requestId=" . $requestId . "&responseTime=" . $responseTime . "&resultCode=" . $resultCode . "&transId=" . $transId;
+    $rawHash = "accessKey=" . $Momo_AccessKey . "&amount=" . $amount . "&extraData=" . $extraData . "&message=" . $message . "&orderId=" . $orderId . "&orderInfo=" . $orderInfo . "&orderType=" . $orderType . "&partnerCode=" . $partnerCode . "&payType=" . $payType . "&requestId=" . $requestId . "&responseTime=" . $responseTime . "&resultCode=" . $resultCode . "&transId=" . $transId;
 
-    $expectedSignature = hash_hmac("sha256", $rawHash, $secretKey);
+    $expectedSignature = hash_hmac("sha256", $rawHash, $Momo_SecretKey);
 
     error_log("Raw hash: " . $rawHash);
     error_log("Expected signature: " . $expectedSignature);
@@ -81,26 +81,19 @@ try {
 
     $status = ($resultCode == 0) ? 'success' : 'failed';
 
-    $stmt->execute([
-        $resultCode,
-        $transId,
-        $message,
-        $payType,
-        $responseTime,
-        $extraData,
-        $signature,
-        $status,
-        $orderId
-    ]);
+    $stmt->bind_param("issssssss", $resultCode, $transId, $message, $payType, $responseTime, $extraData, $signature, $status, $orderId);
+    $stmt->execute();
+    
     $logStmt = $conn->prepare("INSERT INTO transaction_logs (reference_type, reference_id, action, request_data, response_data, http_status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-    $logStmt->execute([
-        'momo',
-        $orderId,
-        'callback',
-        json_encode($input),
-        json_encode(['status' => $status, 'message' => $message]),
-        200
-    ]);
+    $logStmt->bind_param("sssssi", $momoRef, $orderId, $callbackAction, $requestDataJson, $responseDataJson, $httpStatus);
+    
+    $momoRef = 'momo';
+    $callbackAction = 'callback';
+    $requestDataJson = json_encode($input);
+    $responseDataJson = json_encode(['status' => $status, 'message' => $message]);
+    $httpStatus = 200;
+    
+    $logStmt->execute();
 
     if ($resultCode == 0) {
         // Cập nhật trạng thái thanh toán của đơn hàng
@@ -128,14 +121,16 @@ try {
     if (isset($conn)) {
         try {
             $errorLogStmt = $conn->prepare("INSERT INTO transaction_logs (reference_type, reference_id, action, request_data, error_message, http_status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-            $errorLogStmt->execute([
-                'momo',
-                $_POST['orderId'] ?? 'unknown',
-                'callback_error',
-                json_encode($_POST),
-                $e->getMessage(),
-                400
-            ]);
+            
+            $momoRef = 'momo';
+            $orderIdVal = $_POST['orderId'] ?? 'unknown';
+            $actionVal = 'callback_error';
+            $requestVal = json_encode($_POST);
+            $errorVal = $e->getMessage();
+            $httpVal = 400;
+            
+            $errorLogStmt->bind_param("sssssi", $momoRef, $orderIdVal, $actionVal, $requestVal, $errorVal, $httpVal);
+            $errorLogStmt->execute();
         } catch (Exception $logError) {
             error_log("Failed to log error: " . $logError->getMessage());
         }

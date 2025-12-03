@@ -25,9 +25,11 @@ if (!$order) {
 
 // Lấy sản phẩm trong đơn
 $items = [];
-$itemRes = $conn->query("SELECT p.name, oi.price, oi.quantity, p.image, p.sku, oi.seller_id 
+$itemRes = $conn->query("SELECT p.name, oi.price, oi.quantity, p.image, p.sku, oi.seller_id,
+    s.user_id as seller_user_id, s.store_name, s.business_address, s.phone as store_phone, s.email as store_email
     FROM order_items oi 
     JOIN products p ON oi.product_id = p.id 
+    LEFT JOIN seller s ON oi.seller_id = s.seller_id
     WHERE oi.order_id = {$order['id']}");
 while ($item = $itemRes->fetch_assoc()) {
     // Xử lý lấy ảnh đầu tiên nếu image là JSON array
@@ -39,16 +41,11 @@ while ($item = $itemRes->fetch_assoc()) {
         }
     }
     $item['image'] = (strpos($img, 'http') === 0) ? $img : 'http://localhost/' . ltrim($img, '/');
-    // Lấy thông tin cửa hàng
-    $store = null;
-    if ($item['seller_id']) {
-        $storeRes = $conn->query("SELECT store_name, business_address, phone, email FROM seller WHERE seller_id = {$item['seller_id']}");
-        $store = $storeRes && $storeRes->num_rows > 0 ? $storeRes->fetch_assoc() : null;
-    }
-    $item['store_name'] = $store['store_name'] ?? null;
-    $item['business_address'] = $store['business_address'] ?? null;
-    $item['store_phone'] = $store['phone'] ?? null;
-    $item['store_email'] = $store['email'] ?? null;
+    
+    // Convert seller_id and seller_user_id to integers
+    $item['seller_id'] = $item['seller_id'] ? (int)$item['seller_id'] : null;
+    $item['seller_user_id'] = $item['seller_user_id'] ? (int)$item['seller_user_id'] : null;
+    
     $items[] = $item;
 }
 

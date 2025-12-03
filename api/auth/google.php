@@ -92,7 +92,14 @@ try {
         $status = $user['status'] ?? 'active';
         $role = $user['role'] ?? 'user';
         $name = $user['name'];
-        if ($avatar) {
+        
+        // Chỉ update avatar Google nếu user chưa có avatar hoặc đang dùng avatar Google cũ
+        $current_avatar = $user['avatar'];
+        $is_google_avatar = $current_avatar && (strpos($current_avatar, 'googleusercontent.com') !== false || strpos($current_avatar, 'lh3.google') !== false);
+        $is_uploaded_avatar = $current_avatar && strpos($current_avatar, '/uploads/avatars/') !== false;
+        
+        // Chỉ update nếu: chưa có avatar HOẶC đang dùng avatar Google (không phải avatar đã upload)
+        if ($avatar && (!$current_avatar || $is_google_avatar) && !$is_uploaded_avatar) {
             $update_stmt = $conn->prepare("UPDATE users SET avatar = ? WHERE id = ?");
             $update_stmt->bind_param("si", $avatar, $user_id);
             $update_stmt->execute();
@@ -111,6 +118,15 @@ try {
         }
     }
 
+    $stmt->close();
+
+    // Lấy avatar thực tế từ database (có thể đã upload custom avatar)
+    $stmt = $conn->prepare("SELECT avatar FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user_data = $result->fetch_assoc();
+    $actual_avatar = $user_data['avatar'] ?? $avatar;
     $stmt->close();
 
     // 4. Tạo JWT cho FE
@@ -140,7 +156,7 @@ try {
             'id' => $user_id,
             'name' => $name,
             'email' => $email,
-            'avatar' => $avatar,
+            'avatar' => $actual_avatar,  // Avatar thực tế từ DB
             'role' => $role,
             'status' => $status
         ]
