@@ -7300,3 +7300,55 @@ DECODED = Array
     [role] => seller
 )
 
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjE5LCJuYW1lIjoiTmd1eVx1MWVjNW4gS1x1MWVmMyBWXHUxZWY5IiwiZW1haWwiOiIxNzM0OUB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NDk2MDQ2MywiZXhwIjoxNzY1NTY1MjYzLCJpc3MiOiJWaWJlTWFya2V0In0.NU_tuVpy9_rQujVMM4pn4_aEPbHdL3rzVKGEKC7foPI
+DECODED = Array
+(
+    [sub] => 19
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => 17349@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => user
+    [iat] => 1764960463
+    [exp] => 1765565263
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjE5LCJuYW1lIjoiTmd1eVx1MWVjNW4gS1x1MWVmMyBWXHUxZWY5IiwiZW1haWwiOiIxNzM0OUB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NDk2MDQ2MywiZXhwIjoxNzY1NTY1MjYzLCJpc3MiOiJWaWJlTWFya2V0In0.NU_tuVpy9_rQujVMM4pn4_aEPbHdL3rzVKGEKC7foPI
+DECODED = Array
+(
+    [sub] => 19
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => 17349@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => user
+    [iat] => 1764960463
+    [exp] => 1765565263
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQsIm5hbWUiOiJLXHUxZWYzIFZcdTFlZjkgREVWIiwiZW1haWwiOiI0NTg4NkB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoic2VsbGVyIiwiaWF0IjoxNzY0OTYwNzA3LCJleHAiOjE3NjU1NjU1MDcsImlzcyI6IlZpYmVNYXJrZXQifQ.O1w4hvxYgf3wkKQ2eyI4_gbgIuG8Jusc0xpaoWYY-8g
+DECODED = Array
+(
+    [sub] => 4
+    [name] => Kỳ Vỹ DEV
+    [email] => 45886@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => seller
+    [iat] => 1764960707
+    [exp] => 1765565507
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQsIm5hbWUiOiJLXHUxZWYzIFZcdTFlZjkgREVWIiwiZW1haWwiOiI0NTg4NkB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoic2VsbGVyIiwiaWF0IjoxNzY0OTYwNzA3LCJleHAiOjE3NjU1NjU1MDcsImlzcyI6IlZpYmVNYXJrZXQifQ.O1w4hvxYgf3wkKQ2eyI4_gbgIuG8Jusc0xpaoWYY-8g
+DECODED = Array
+(
+    [sub] => 4
+    [name] => Kỳ Vỹ DEV
+    [email] => 45886@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => seller
+    [iat] => 1764960707
+    [exp] => 1765565507
+    [iss] => VibeMarket
+)
+
