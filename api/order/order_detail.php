@@ -9,9 +9,11 @@ if (!$order_code) {
     exit;
 }
 
-$sql = "SELECT o.*, sm.shipping_method, sm.shipping_carrier, sm.shipping_estimated_days
+$sql = "SELECT o.*, sm.shipping_method, sm.shipping_carrier, sm.shipping_estimated_days,
+        c.code as coupon_code
         FROM orders o
         LEFT JOIN shipping_methods sm ON o.shipping_method_id = sm.id
+        LEFT JOIN coupons c ON o.coupon_id = c.id
         WHERE o.code = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $order_code);
@@ -84,6 +86,10 @@ $order['payment'] = [
 ];
 
 $order['shipping_fee'] = $order['shipping_fee'] ?? 0;
+
+// Thông tin mã giảm giá
+$order['coupon_code'] = $order['coupon_code'] ?? null;
+$order['discount_amount'] = isset($order['discount_amount']) ? (float)$order['discount_amount'] : 0;
 
 // Nếu FE vẫn cần trường cũ:
 $order['payment_method'] = $order['payment_method'] ?? null;

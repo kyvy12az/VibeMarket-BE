@@ -7352,3 +7352,42 @@ DECODED = Array
     [iss] => VibeMarket
 )
 
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQsIm5hbWUiOiJLXHUxZWYzIFZcdTFlZjkgREVWIiwiZW1haWwiOiI0NTg4NkB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoic2VsbGVyIiwiaWF0IjoxNzY0OTYwNzA3LCJleHAiOjE3NjU1NjU1MDcsImlzcyI6IlZpYmVNYXJrZXQifQ.O1w4hvxYgf3wkKQ2eyI4_gbgIuG8Jusc0xpaoWYY-8g
+DECODED = Array
+(
+    [sub] => 4
+    [name] => Kỳ Vỹ DEV
+    [email] => 45886@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => seller
+    [iat] => 1764960707
+    [exp] => 1765565507
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQsIm5hbWUiOiJLXHUxZWYzIFZcdTFlZjkgREVWIiwiZW1haWwiOiI0NTg4NkB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoic2VsbGVyIiwiaWF0IjoxNzY1MjExMjk5LCJleHAiOjE3NjU4MTYwOTksImlzcyI6IlZpYmVNYXJrZXQifQ.g5jCuAApbREbeaYagT71swpkerx-0QZ3xKORInNZ_lo
+DECODED = Array
+(
+    [sub] => 4
+    [name] => Kỳ Vỹ DEV
+    [email] => 45886@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => seller
+    [iat] => 1765211299
+    [exp] => 1765816099
+    [iss] => VibeMarket
+)
+
+RAW TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQsIm5hbWUiOiJLXHUxZWYzIFZcdTFlZjkgREVWIiwiZW1haWwiOiI0NTg4NkB2aWJlbWFya2V0LnZuIiwiemFsb19pZCI6IjY5MDE0MzEyMjc3NzU1NzI2MDUiLCJyb2xlIjoic2VsbGVyIiwiaWF0IjoxNzY1MjExMjk5LCJleHAiOjE3NjU4MTYwOTksImlzcyI6IlZpYmVNYXJrZXQifQ.g5jCuAApbREbeaYagT71swpkerx-0QZ3xKORInNZ_lo
+DECODED = Array
+(
+    [sub] => 4
+    [name] => Kỳ Vỹ DEV
+    [email] => 45886@vibemarket.vn
+    [zalo_id] => 6901431227775572605
+    [role] => seller
+    [iat] => 1765211299
+    [exp] => 1765816099
+    [iss] => VibeMarket
+)
+

@@ -36,6 +36,10 @@ $code = 'OD' . time() . rand(100, 999);
 $payment_transaction_id = 'VMGD' . time() . rand(1000, 9999);
 $shipping_tracking_code = 'TRK' . time() . rand(1000, 9999);
 
+// Coupon data
+$coupon_id = isset($data['coupon_id']) ? intval($data['coupon_id']) : null;
+$discount_amount = isset($data['discount_amount']) ? floatval($data['discount_amount']) : 0;
+
 $conn->begin_transaction();
 
 $shipping_fee = isset($data['shipping_fee']) ? intval($data['shipping_fee']) : 0;
@@ -55,27 +59,28 @@ if ($shipping_method_id) {
 }
 
 try {
-    // Insert order
+    // Insert order - không cần chỉ định status vì có giá trị default 'pending'
     $stmt = $conn->prepare("INSERT INTO orders 
-        (code, customer_id, customer_name, phone, email, address, note, total, shipping_fee, status, payment_method, payment_status, payment_transaction_id, shipping_method_id, shipping_tracking_code, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        (code, customer_id, customer_name, phone, email, address, note, total, shipping_fee, payment_method, payment_status, payment_transaction_id, shipping_method_id, shipping_tracking_code, coupon_id, discount_amount, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
     $stmt->bind_param(
-        "sisssssiissssis",
-        $code, // s
-        $customer_id, // i
-        $data['fullName'], // s
-        $data['phone'], // s
-        $email, // s
-        $data['address'], // s
-        $note, // s
-        $data['total'], // i
-        $shipping_fee, // i
-        $status, // s
-        $data['payment_method'], // s
-        $payment_status, // s
-        $payment_transaction_id,  // s
-        $shipping_method_id,  // i
-        $shipping_tracking_code // s
+        "sissssssisssisid",
+        $code, // s - 1
+        $customer_id, // i - 2
+        $data['fullName'], // s - 3
+        $data['phone'], // s - 4
+        $email, // s - 5
+        $data['address'], // s - 6
+        $note, // s - 7
+        $data['total'], // i - 8
+        $shipping_fee, // i - 9
+        $data['payment_method'], // s - 10
+        $payment_status, // s - 11
+        $payment_transaction_id,  // s - 12
+        $shipping_method_id,  // i - 13
+        $shipping_tracking_code, // s - 14
+        $coupon_id, // i - 15
+        $discount_amount // d - 16
     );
     if (!$stmt->execute()) {
         throw new Exception("Order insert error: " . $stmt->error);
@@ -107,6 +112,30 @@ try {
             throw new Exception("Order item insert error: " . $stmtItem->error);
         }
         $stmtItem->close();
+    }
+    
+    // Update coupon usage or mark user voucher as used
+    if ($coupon_id && $discount_amount > 0) {
+        $coupon_code = isset($data['coupon_code']) ? $data['coupon_code'] : '';
+        
+        // Check if this is a lucky wheel voucher
+        if ($coupon_code && strpos($coupon_code, 'LW') === 0) {
+            // Mark user voucher as used
+            $voucherStmt = $conn->prepare("UPDATE user_vouchers SET is_used = 1, used_at = NOW() WHERE voucher_code = ?");
+            $voucherStmt->bind_param("s", $coupon_code);
+            if (!$voucherStmt->execute()) {
+                throw new Exception("Failed to mark voucher as used: " . $voucherStmt->error);
+            }
+            $voucherStmt->close();
+        } else {
+            // Update seller coupon usage count
+            $couponStmt = $conn->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
+            $couponStmt->bind_param("i", $coupon_id);
+            if (!$couponStmt->execute()) {
+                throw new Exception("Failed to update coupon usage: " . $couponStmt->error);
+            }
+            $couponStmt->close();
+        }
     }
 
     $conn->commit();
