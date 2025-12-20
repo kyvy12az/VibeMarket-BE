@@ -1,22 +1,16 @@
 <?php
-// Database config
-// $host = 'sql207.infinityfree.com';
-// $db   = 'if0_40114539_vibemarket_db';
-// $user = 'if0_40114539';
-// $pass = 'kyvy19022006';
+
+// $host = 'localhost';
+// $db   = 'vibemarket_db';
+// $user = 'root';
+// $pass = '';
 // $charset = 'utf8mb4';
 
 $host = 'localhost';
-$db   = 'vibemarket_db';
-$user = 'root';
-$pass = '';
+$db   = 'ha6a3b453c_vibemarket_db';
+$user = 'ha6a3b453c_vibemarket_db';
+$pass = 'vibemarket_db';
 $charset = 'utf8mb4';
-
-// $host = 'localhost';
-// $db   = 'ha6a3b453c_vibemarket_db';
-// $user = 'ha6a3b453c_vibemarket_db';
-// $pass = 'vibemarket_db';
-// $charset = 'utf8mb4';
 
 // Dev/prod config
 $isDev = (isset($_SERVER['HTTP_HOST']) && ($_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], '.test') !== false));
@@ -41,6 +35,8 @@ if (strpos($domain_url, 'localhost') !== false) {
 /**
  * GitHub OAuth config
  */
+global $Github_ClientID, $Github_SecretKey, $Github_RedirectURI, $Github_Scope, $Github_LoginURL;
+
 $Github_ClientID    = "Ov23litV3WecCirGyvxU";
 $Github_SecretKey   = "b5453874ebd32a87cae436400cdf182986be4c09";
 // $Github_RedirectURI = $domain_url . "/api/auth/github_callback.php";
@@ -63,6 +59,11 @@ $ZaloPay_AppID = "2553";
 $ZaloPay_Key1 = "PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL";   
 $ZaloPay_Key2 = "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz";   
 $ZaloPay_Endpoint = "https://sb-openapi.zalopay.vn/v2/create";
+
+/**
+ * Geoapify Routing API config (3000 free requests/day)
+ */
+$Geoapify_ApiKey = "03364016feee40ba9577c0bd9d35481f";
 
 // Map GHN order status to Vietnamese
 function GHNOrderStatus($status) {

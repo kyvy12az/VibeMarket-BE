@@ -115,8 +115,14 @@ if (!isset($result->error)) {
             $role = $user['role'];
             $phone = $user['phone'];
             $address = $user['address'];
+            
+            // Update provider nếu chưa có
+            $stmt_update = $conn->prepare("UPDATE users SET provider = 'zalo' WHERE id = ?");
+            $stmt_update->bind_param("i", $user_id);
+            $stmt_update->execute();
+            $stmt_update->close();
         } else {
-            $stmt = $conn->prepare("INSERT INTO users (name, zalo_id, avatar, password, email, role) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO users (name, zalo_id, avatar, password, email, role, provider) VALUES (?, ?, ?, ?, ?, ?, 'zalo')");
             $hashedPassword = password_hash(bin2hex(random_bytes(8)), PASSWORD_BCRYPT);
             $role = 'user';
             $stmt->bind_param("ssssss", $name, $zaloId, $avatar, $hashedPassword, $email, $role);

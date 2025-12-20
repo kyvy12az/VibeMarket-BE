@@ -7,9 +7,64 @@ int_headers();
 // Lấy dữ liệu từ body JSON
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Nếu image là mảng => convert sang JSON string
+// Helper function để normalize đường dẫn ảnh
+function normalizeImagePath($imagePath) {
+    if (empty($imagePath)) {
+        return $imagePath;
+    }
+    
+    // Nếu là URL đầy đủ, extract path
+    if (strpos($imagePath, 'http://') === 0 || strpos($imagePath, 'https://') === 0) {
+        $parsed = parse_url($imagePath);
+        $path = $parsed['path'] ?? '';
+        
+        // Tìm phần sau /VIBE_MARKET_BACKEND/VibeMarket-BE/
+        if (strpos($path, '/VIBE_MARKET_BACKEND/VibeMarket-BE/') !== false) {
+            $path = substr($path, strpos($path, '/VIBE_MARKET_BACKEND/VibeMarket-BE/') + strlen('/VIBE_MARKET_BACKEND/VibeMarket-BE'));
+        }
+        
+        // Nếu đã có /uploads/products/ thì giữ nguyên
+        if (strpos($path, '/uploads/products/') === 0) {
+            return $path;
+        }
+        
+        // Nếu có uploads/products/ (không có / đầu) thì thêm /
+        if (strpos($path, 'uploads/products/') === 0) {
+            return '/' . $path;
+        }
+        
+        // Còn lại extract tên file
+        $imagePath = basename($path);
+    }
+    
+    // Nếu đã có /uploads/products/ hoặc uploads/products/ thì chuẩn hóa
+    if (strpos($imagePath, '/uploads/products/') === 0) {
+        return $imagePath;
+    }
+    if (strpos($imagePath, 'uploads/products/') === 0) {
+        return '/' . $imagePath;
+    }
+    
+    // Chỉ còn tên file -> thêm prefix
+    return '/uploads/products/' . ltrim($imagePath, '/');
+}
+
+// Nếu image là mảng => normalize từng ảnh và convert sang JSON string
 if (isset($data['image']) && is_array($data['image'])) {
-    $data['image'] = json_encode($data['image'], JSON_UNESCAPED_UNICODE);
+    $normalizedImages = array_map('normalizeImagePath', $data['image']);
+    $data['image'] = json_encode($normalizedImages, JSON_UNESCAPED_UNICODE);
+} elseif (isset($data['image']) && is_string($data['image'])) {
+    // Nếu là string, check xem có phải JSON không
+    $decoded = json_decode($data['image'], true);
+    if (is_array($decoded)) {
+        // Là JSON array -> normalize từng ảnh
+        $normalizedImages = array_map('normalizeImagePath', $decoded);
+        $data['image'] = json_encode($normalizedImages, JSON_UNESCAPED_UNICODE);
+    } else {
+        // Là string đơn -> normalize và wrap trong array
+        $normalized = normalizeImagePath($data['image']);
+        $data['image'] = json_encode([$normalized], JSON_UNESCAPED_UNICODE);
+    }
 }
 
 // Kiểm tra dữ liệu bắt buộc

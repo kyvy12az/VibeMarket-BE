@@ -36,9 +36,16 @@ $code = 'OD' . time() . rand(100, 999);
 $payment_transaction_id = 'VMGD' . time() . rand(1000, 9999);
 $shipping_tracking_code = 'TRK' . time() . rand(1000, 9999);
 
-// Coupon data
-$coupon_id = isset($data['coupon_id']) ? intval($data['coupon_id']) : null;
+// Coupon data - Support dual vouchers (discount + freeship)
+$discount_coupon_id = isset($data['discount_coupon_id']) ? intval($data['discount_coupon_id']) : null;
+$freeship_coupon_id = isset($data['freeship_coupon_id']) ? intval($data['freeship_coupon_id']) : null;
 $discount_amount = isset($data['discount_amount']) ? floatval($data['discount_amount']) : 0;
+$freeship_discount = isset($data['freeship_discount']) ? floatval($data['freeship_discount']) : 0;
+
+// Legacy support for old single coupon_id (for backward compatibility)
+if (!$discount_coupon_id && isset($data['coupon_id'])) {
+    $discount_coupon_id = intval($data['coupon_id']);
+}
 
 $conn->begin_transaction();
 
@@ -59,12 +66,12 @@ if ($shipping_method_id) {
 }
 
 try {
-    // Insert order - không cần chỉ định status vì có giá trị default 'pending'
+    // Insert order with dual voucher support
     $stmt = $conn->prepare("INSERT INTO orders 
-        (code, customer_id, customer_name, phone, email, address, note, total, shipping_fee, payment_method, payment_status, payment_transaction_id, shipping_method_id, shipping_tracking_code, coupon_id, discount_amount, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        (code, customer_id, customer_name, phone, email, address, note, total, shipping_fee, payment_method, payment_status, payment_transaction_id, shipping_method_id, shipping_tracking_code, discount_coupon_id, discount_amount, freeship_coupon_id, freeship_discount, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
     $stmt->bind_param(
-        "sissssssisssisid",
+        "sissssssisssiididd",
         $code, // s - 1
         $customer_id, // i - 2
         $data['fullName'], // s - 3
@@ -79,8 +86,10 @@ try {
         $payment_transaction_id,  // s - 12
         $shipping_method_id,  // i - 13
         $shipping_tracking_code, // s - 14
-        $coupon_id, // i - 15
-        $discount_amount // d - 16
+        $discount_coupon_id, // i - 15
+        $discount_amount, // d - 16
+        $freeship_coupon_id, // i - 17
+        $freeship_discount // d - 18
     );
     if (!$stmt->execute()) {
         throw new Exception("Order insert error: " . $stmt->error);
@@ -114,25 +123,49 @@ try {
         $stmtItem->close();
     }
     
-    // Update coupon usage or mark user voucher as used
-    if ($coupon_id && $discount_amount > 0) {
-        $coupon_code = isset($data['coupon_code']) ? $data['coupon_code'] : '';
+    // Update discount coupon usage
+    if ($discount_coupon_id && $discount_amount > 0) {
+        // Check if this ID exists in user_vouchers (lucky wheel)
+        $voucherCheck = $conn->query("SELECT id FROM user_vouchers WHERE id = {$discount_coupon_id} LIMIT 1");
         
-        // Check if this is a lucky wheel voucher
-        if ($coupon_code && strpos($coupon_code, 'LW') === 0) {
-            // Mark user voucher as used
-            $voucherStmt = $conn->prepare("UPDATE user_vouchers SET is_used = 1, used_at = NOW() WHERE voucher_code = ?");
-            $voucherStmt->bind_param("s", $coupon_code);
+        if ($voucherCheck && $voucherCheck->num_rows > 0) {
+            // This is a lucky wheel voucher - mark as used
+            $voucherStmt = $conn->prepare("UPDATE user_vouchers SET is_used = 1, used_at = NOW() WHERE id = ?");
+            $voucherStmt->bind_param("i", $discount_coupon_id);
             if (!$voucherStmt->execute()) {
-                throw new Exception("Failed to mark voucher as used: " . $voucherStmt->error);
+                throw new Exception("Failed to mark discount voucher as used: " . $voucherStmt->error);
             }
             $voucherStmt->close();
         } else {
-            // Update seller coupon usage count
+            // This is a seller coupon - increment usage count
             $couponStmt = $conn->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
-            $couponStmt->bind_param("i", $coupon_id);
+            $couponStmt->bind_param("i", $discount_coupon_id);
             if (!$couponStmt->execute()) {
-                throw new Exception("Failed to update coupon usage: " . $couponStmt->error);
+                throw new Exception("Failed to update discount coupon usage: " . $couponStmt->error);
+            }
+            $couponStmt->close();
+        }
+    }
+
+    // Update freeship coupon usage
+    if ($freeship_coupon_id && $freeship_discount > 0) {
+        // Check if this ID exists in user_vouchers (lucky wheel)
+        $voucherCheck = $conn->query("SELECT id FROM user_vouchers WHERE id = {$freeship_coupon_id} LIMIT 1");
+        
+        if ($voucherCheck && $voucherCheck->num_rows > 0) {
+            // This is a lucky wheel voucher - mark as used
+            $voucherStmt = $conn->prepare("UPDATE user_vouchers SET is_used = 1, used_at = NOW() WHERE id = ?");
+            $voucherStmt->bind_param("i", $freeship_coupon_id);
+            if (!$voucherStmt->execute()) {
+                throw new Exception("Failed to mark freeship voucher as used: " . $voucherStmt->error);
+            }
+            $voucherStmt->close();
+        } else {
+            // This is a seller coupon - increment usage count
+            $couponStmt = $conn->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
+            $couponStmt->bind_param("i", $freeship_coupon_id);
+            if (!$couponStmt->execute()) {
+                throw new Exception("Failed to update freeship coupon usage: " . $couponStmt->error);
             }
             $couponStmt->close();
         }

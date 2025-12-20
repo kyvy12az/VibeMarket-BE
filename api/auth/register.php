@@ -43,7 +43,7 @@ $stmt->close();
 
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-$stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password, avatar, zalo_id, facebook_id, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password, avatar, zalo_id, facebook_id, role, provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'local')");
 $stmt->bind_param("sssssssss", $name, $email, $phone, $address, $hashedPassword, $avatar, $zalo_id, $facebook_id, $role);
 
 if ($stmt->execute()) {
@@ -74,7 +74,8 @@ if ($stmt->execute()) {
             'avatar' => $avatar,
             'zalo_id' => $zalo_id,
             'facebook_id' => $facebook_id,
-            'role' => $role
+            'role' => $role,
+            'provider' => 'local'
         ]
     ]);
 } else {

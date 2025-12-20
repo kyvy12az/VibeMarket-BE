@@ -89,7 +89,7 @@ $stmt->bind_param("si", $filename, $seller_id);
 
 if ($stmt->execute()) {
     // Tạo URL đầy đủ sử dụng helper
-    $avatar_url = getFullImageUrl('store_avatars/' . $filename) . '?t=' . time();
+    $avatar_url = getFullImageUrl('vendor/avatars/' . $filename) . '?t=' . time();
     
     echo json_encode([
         'success' => true,

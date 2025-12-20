@@ -100,13 +100,19 @@ try {
         
         // Chỉ update nếu: chưa có avatar HOẶC đang dùng avatar Google (không phải avatar đã upload)
         if ($avatar && (!$current_avatar || $is_google_avatar) && !$is_uploaded_avatar) {
-            $update_stmt = $conn->prepare("UPDATE users SET avatar = ? WHERE id = ?");
+            $update_stmt = $conn->prepare("UPDATE users SET avatar = ?, provider = 'google' WHERE id = ?");
             $update_stmt->bind_param("si", $avatar, $user_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        } else {
+            // Chỉ update provider
+            $update_stmt = $conn->prepare("UPDATE users SET provider = 'google' WHERE id = ?");
+            $update_stmt->bind_param("i", $user_id);
             $update_stmt->execute();
             $update_stmt->close();
         }
     } else {
-        $stmt = $conn->prepare("INSERT INTO users (name, email, avatar, password, role) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (name, email, avatar, password, role, provider) VALUES (?, ?, ?, ?, ?, 'google')");
         $default_password = password_hash('google_auth_' . time(), PASSWORD_DEFAULT);
         $role = 'user';
         $stmt->bind_param("sssss", $name, $email, $avatar, $default_password, $role);

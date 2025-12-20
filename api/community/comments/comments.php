@@ -12,6 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Dynamic BASE_URL for local and production
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+if (strpos($host, 'localhost') !== false) {
+    $BASE_URL = 'http://' . $host . '/VIBE_MARKET_BACKEND/VibeMarket-BE';
+} else {
+    $BASE_URL = 'https://' . $host;
+}
+
 $postId = intval($_GET['post_id'] ?? 0);
 if (!$postId) {
     echo json_encode(['success' => false, 'message' => 'Missing post_id']);
@@ -41,6 +49,11 @@ $map = [];
 $roots = [];
 
 while ($c = $res->fetch_assoc()) {
+    $avatar = $c['avatar'];
+    if (!empty($avatar) && !str_starts_with($avatar, "http")) {
+        $avatar = $BASE_URL . $avatar;
+    }
+
     $flat[] = [
         'id'         => (int)$c['id'],
         'content'    => $c['content'],
@@ -53,7 +66,7 @@ while ($c = $res->fetch_assoc()) {
         'user' => [
             'id' => (int)$c['user_id'],
             'name' => $c['name'],
-            'avatar' => $c['avatar'],
+            'avatar' => $avatar,
         ],
 
         'replies' => []

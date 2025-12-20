@@ -34,7 +34,7 @@ $conn->begin_transaction();
 try {
     $stmt = $conn->prepare("
         INSERT INTO posts (user_id, content, status)
-        VALUES (?, ?, 'public')
+        VALUES (?, ?, 'pending')
     ");
     $stmt->bind_param("is", $userId, $content);
     $stmt->execute();
@@ -101,7 +101,9 @@ try {
 
     echo json_encode([
         "success" => true,
-        "post_id" => $postId
+        "post_id" => $postId,
+        "status" => "pending",
+        "message" => "Bài viết của bạn đang chờ duyệt. Chúng tôi sẽ xem xét và phê duyệt trong thời gian sớm nhất."
     ]);
 } catch (Exception $e) {
     $conn->rollback();

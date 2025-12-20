@@ -36,13 +36,12 @@ function getProductImageUrls($imageJson) {
         if (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0) {
             return $img;
         }
-        if (strpos($img, 'uploads/') === 0) {
-            return $backend_url . '/' . $img;
-        }
-        if (strpos($img, '/uploads/') === 0) {
+        // Nếu đã có /uploads/products/ thì concat trực tiếp
+        if (strpos($img, '/uploads/products/') === 0) {
             return $backend_url . $img;
         }
-        return $backend_url . '/uploads/products/' . $img;
+        // Còn lại thêm prefix
+        return $backend_url . '/uploads/products/' . ltrim($img, '/');
     }, $images);
 }
 
@@ -76,7 +75,8 @@ try {
         p.sold as total_sold,
         (p.quantity - p.sold) as current_stock,
         s.store_name AS seller_name, 
-        s.avatar AS seller_avatar
+        s.avatar AS seller_avatar,
+        s.business_address AS business_address
     FROM products p
     LEFT JOIN seller s ON p.seller_id = s.seller_id
     WHERE p.id = ? AND p.status = 'active'";
@@ -223,6 +223,7 @@ try {
                 'seller_id' => (int)$row['seller_id'],
                 'seller_name' => $row['seller_name'] ?? '',
                 'seller_avatar' => getAvatarUrl($row['seller_avatar']),
+                'business_address' => $row['business_address'] ?? null,
                 
                 // Shipping & Status
                 'shipping_fee' => !empty($row['shipping_fee']) ? (int)$row['shipping_fee'] : 0,

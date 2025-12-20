@@ -31,31 +31,56 @@ $is_lucky_wheel_voucher = strpos($coupon_code, 'LW') === 0;
 
 if ($is_lucky_wheel_voucher) {
     // Get user voucher from user_vouchers table
+    // First check if voucher exists
+    $checkSql = "SELECT id, is_used, expires_at FROM user_vouchers WHERE voucher_code = ?";
+    $checkStmt = $conn->prepare($checkSql);
+    $checkStmt->bind_param("s", $coupon_code);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+    
+    if ($checkResult->num_rows === 0) {
+        $checkStmt->close();
+        echo json_encode(['success' => false, 'message' => 'Mã giảm giá không tồn tại']);
+        exit;
+    }
+    
+    $voucherCheck = $checkResult->fetch_assoc();
+    $checkStmt->close();
+    
+    // Check if already used
+    if ($voucherCheck['is_used'] == 1) {
+        echo json_encode(['success' => false, 'message' => 'Mã giảm giá đã được sử dụng. Mỗi voucher chỉ được dùng 1 lần']);
+        exit;
+    }
+    
+    // Check if expired
+    if ($voucherCheck['expires_at'] && $voucherCheck['expires_at'] < date('Y-m-d H:i:s')) {
+        echo json_encode(['success' => false, 'message' => 'Mã giảm giá đã hết hạn']);
+        exit;
+    }
+    
+    // Get full voucher data
     $sql = "SELECT 
                 id, 
                 voucher_code as code, 
                 prize_name as description,
+                voucher_type,
                 discount_amount,
                 min_order_value as min_purchase,
                 is_used,
                 expires_at as end_date
             FROM user_vouchers 
-            WHERE voucher_code = ? AND is_used = 0 AND expires_at > NOW()";
+            WHERE voucher_code = ?";
     
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $coupon_code);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    if ($result->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'Mã giảm giá không tồn tại hoặc đã hết hạn']);
-        exit;
-    }
-    
     $coupon = $result->fetch_assoc();
     $stmt->close();
     
     // Set standard fields for user voucher
+    $coupon['coupon_type'] = $coupon['voucher_type']; // 'discount' or 'freeship'
     $coupon['discount_type'] = 'fixed';
     $coupon['discount_value'] = $coupon['discount_amount'];
     $coupon['start_date'] = null;
@@ -154,6 +179,7 @@ echo json_encode([
     'coupon' => [
         'id' => (int)$coupon['id'],
         'code' => $coupon['code'],
+        'coupon_type' => $coupon['coupon_type'] ?? 'discount', // Add coupon_type
         'discount_type' => $coupon['discount_type'],
         'discount_value' => (float)$coupon['discount_value'],
         'discount_amount' => round($discount_amount, 2),

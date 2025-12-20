@@ -30,10 +30,12 @@ function getProductImageUrls($imageJson) {
         if (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0) {
             return $img;
         }
-        if (strpos($img, 'uploads/') === 0) {
-            return $backend_url . '/' . $img;
+        // Nếu đã có /uploads/products/ thì concat trực tiếp
+        if (strpos($img, '/uploads/products/') === 0) {
+            return $backend_url . $img;
         }
-        return $backend_url . '/uploads/products/' . $img;
+        // Còn lại thêm prefix
+        return $backend_url . '/uploads/products/' . ltrim($img, '/');
     }, $images);
 }
 

@@ -14,6 +14,14 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
+// Dynamic BASE_URL for local and production
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+if (strpos($host, 'localhost') !== false) {
+    $BASE_URL = 'http://' . $host . '/VIBE_MARKET_BACKEND/VibeMarket-BE';
+} else {
+    $BASE_URL = 'https://' . $host;
+}
+
 $userId = get_user_id_from_token();
 if (!$userId) {
     echo json_encode(["success" => false, "message" => "Unauthorized"]);
@@ -47,6 +55,11 @@ if ($action === "reply") {
     $u->execute();
     $userData = $u->get_result()->fetch_assoc();
 
+    $avatar = $userData["avatar"];
+    if (!empty($avatar) && !str_starts_with($avatar, "http")) {
+        $avatar = $BASE_URL . $avatar;
+    }
+
     echo json_encode([
         "success" => true,
         "comment" => [
@@ -57,7 +70,7 @@ if ($action === "reply") {
             "liked" => false,
             "user" => [
                 "name" => $userData["name"],
-                "avatar" => $userData["avatar"]
+                "avatar" => $avatar
             ],
             "replies" => []
         ]

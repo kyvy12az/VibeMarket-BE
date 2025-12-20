@@ -143,7 +143,7 @@ try {
     ob_clean();
 
     // Create full URL using helper
-    $full_cover_url = getFullImageUrl('store_covers/' . $filename);
+    $full_cover_url = getFullImageUrl('vendor/covers/' . $filename);
 
     $conn->close();
 

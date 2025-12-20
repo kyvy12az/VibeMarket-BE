@@ -29,10 +29,10 @@ if ($result->num_rows > 0) {
     $seller = $result->fetch_assoc();
     
     // Xử lý avatar URL using helper
-    $avatar_url = getFullImageUrl($seller['avatar'] ? 'store_avatars/' . $seller['avatar'] : null);
+    $avatar_url = getFullImageUrl($seller['avatar'] ? 'vendor/avatars/' . $seller['avatar'] : null);
     
     // Xử lý cover URL using helper
-    $cover_url = getFullImageUrl($seller['cover_image'] ? 'store_covers/' . $seller['cover_image'] : null);
+    $cover_url = getFullImageUrl($seller['cover_image'] ? 'vendor/covers/' . $seller['cover_image'] : null);
     
     echo json_encode([
         'success' => true,

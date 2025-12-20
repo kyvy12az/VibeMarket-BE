@@ -12,7 +12,13 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
-$BASE_URL = "http://localhost/VIBE_MARKET_BACKEND/VibeMarket-BE";
+// Dynamic BASE_URL for local and production
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+if (strpos($host, 'localhost') !== false) {
+    $BASE_URL = 'http://' . $host . '/VIBE_MARKET_BACKEND/VibeMarket-BE';
+} else {
+    $BASE_URL = 'https://' . $host;
+}
 
 // Lấy token từ header (optional - có thể cho phép anonymous)
 $userId = get_user_id_from_token();

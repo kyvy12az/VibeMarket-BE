@@ -9,6 +9,14 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { http_response_code(200); exit; }
 
+// Dynamic BASE_URL for local and production
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+if (strpos($host, 'localhost') !== false) {
+    $BASE_URL = 'http://' . $host . '/VIBE_MARKET_BACKEND/VibeMarket-BE';
+} else {
+    $BASE_URL = 'https://' . $host;
+}
+
 $body     = json_decode(file_get_contents("php://input"), true);
 $postId   = intval($body["post_id"] ?? 0);
 $content  = trim($body["content"] ?? "");
@@ -44,6 +52,11 @@ $q = $conn->query("
 
 $c = $q->fetch_assoc();
 
+$avatar = $c["avatar"];
+if (!empty($avatar) && !str_starts_with($avatar, "http")) {
+    $avatar = $BASE_URL . $avatar;
+}
+
 echo json_encode([
     "success" => true,
     "comment" => [
@@ -54,8 +67,7 @@ echo json_encode([
         "user" => [
             "id" => (int)$c["user_id"],
             "name" => $c["name"],
-            "avatar" => $c["avatar"] ?: null,
-
+            "avatar" => $avatar
         ]
     ]
 ]);

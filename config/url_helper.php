@@ -35,6 +35,8 @@ if (!function_exists('getFullImageUrl')) {
         // Handle different path formats
         if (strpos($relativePath, 'uploads/') === 0) {
             return $baseUrl . '/' . $relativePath;
+        } else if (strpos($relativePath, '/uploads/') === 0) {
+            return $baseUrl . $relativePath;
         } else {
             return $baseUrl . '/uploads/' . $relativePath;
         }
@@ -47,8 +49,8 @@ if (!function_exists('getUploadDirectory')) {
         $base_dir = __DIR__ . '/../uploads/';
         
         $directories = [
-            'avatar' => $base_dir . 'store_avatars/',
-            'cover' => $base_dir . 'store_covers/',
+            'avatar' => $base_dir . 'vendor/avatars/',
+            'cover' => $base_dir . 'vendor/covers/',
             'product' => $base_dir . 'products/',
             'general' => $base_dir
         ];

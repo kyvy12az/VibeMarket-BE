@@ -87,9 +87,78 @@ $order['payment'] = [
 
 $order['shipping_fee'] = $order['shipping_fee'] ?? 0;
 
-// Thông tin mã giảm giá
-$order['coupon_code'] = $order['coupon_code'] ?? null;
+// Thông tin mã giảm giá - Dual voucher support
 $order['discount_amount'] = isset($order['discount_amount']) ? (float)$order['discount_amount'] : 0;
+
+// Get discount coupon code and determine if it's from lucky wheel or seller
+$order['discount_coupon_code'] = null;
+$order['is_discount_lucky_wheel'] = false;
+
+// Priority 1: Check discount_coupon_id (new dual voucher system)
+if (isset($order['discount_coupon_id']) && $order['discount_coupon_id'] > 0) {
+    $discount_id = (int)$order['discount_coupon_id'];
+    
+    // Try user_vouchers first (lucky wheel vouchers have LW- prefix)
+    $voucherCheck = $conn->query("SELECT voucher_code FROM user_vouchers WHERE id = {$discount_id} LIMIT 1");
+    if ($voucherCheck && $voucherCheck->num_rows > 0) {
+        $voucher = $voucherCheck->fetch_assoc();
+        $order['discount_coupon_code'] = $voucher['voucher_code'];
+        $order['is_discount_lucky_wheel'] = true;
+    } else {
+        // Try coupons table (seller coupon)
+        $couponCheck = $conn->query("SELECT code FROM coupons WHERE id = {$discount_id} LIMIT 1");
+        if ($couponCheck && $couponCheck->num_rows > 0) {
+            $coupon = $couponCheck->fetch_assoc();
+            $order['discount_coupon_code'] = $coupon['code'];
+            $order['is_discount_lucky_wheel'] = false;
+        }
+    }
+    $order['discount_coupon_id'] = $discount_id;
+} 
+// Priority 2: Fallback to legacy coupon_id (old system)
+else if (isset($order['coupon_id']) && $order['coupon_id'] > 0) {
+    $coupon_id = (int)$order['coupon_id'];
+    $couponCheck = $conn->query("SELECT code FROM coupons WHERE id = {$coupon_id} LIMIT 1");
+    if ($couponCheck && $couponCheck->num_rows > 0) {
+        $coupon = $couponCheck->fetch_assoc();
+        $order['discount_coupon_code'] = $coupon['code'];
+        $order['is_discount_lucky_wheel'] = false;
+    }
+    $order['discount_coupon_id'] = null;
+} else {
+    $order['discount_coupon_id'] = null;
+}
+
+// Keep legacy coupon_code for backward compatibility
+$order['coupon_code'] = $order['discount_coupon_code'];
+
+// Get freeship coupon code and determine if it's from lucky wheel or seller
+$order['freeship_coupon_code'] = null;
+$order['freeship_discount'] = isset($order['freeship_discount']) ? (float)$order['freeship_discount'] : 0;
+$order['is_freeship_lucky_wheel'] = false;
+
+if (isset($order['freeship_coupon_id']) && $order['freeship_coupon_id'] > 0) {
+    $freeship_id = (int)$order['freeship_coupon_id'];
+    
+    // Try user_vouchers first (lucky wheel)
+    $voucherCheck = $conn->query("SELECT voucher_code FROM user_vouchers WHERE id = {$freeship_id} LIMIT 1");
+    if ($voucherCheck && $voucherCheck->num_rows > 0) {
+        $voucher = $voucherCheck->fetch_assoc();
+        $order['freeship_coupon_code'] = $voucher['voucher_code'];
+        $order['is_freeship_lucky_wheel'] = true;
+    } else {
+        // Try coupons table (seller coupon)
+        $couponCheck = $conn->query("SELECT code FROM coupons WHERE id = {$freeship_id} LIMIT 1");
+        if ($couponCheck && $couponCheck->num_rows > 0) {
+            $coupon = $couponCheck->fetch_assoc();
+            $order['freeship_coupon_code'] = $coupon['code'];
+            $order['is_freeship_lucky_wheel'] = false;
+        }
+    }
+    $order['freeship_coupon_id'] = $freeship_id;
+} else {
+    $order['freeship_coupon_id'] = null;
+}
 
 // Nếu FE vẫn cần trường cũ:
 $order['payment_method'] = $order['payment_method'] ?? null;
