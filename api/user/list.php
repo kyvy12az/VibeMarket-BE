@@ -82,10 +82,50 @@ try {
 
     $users = [];
     while ($row = $result->fetch_assoc()) {
+        // Normalize avatar url
+        if (!function_exists('build_base_url')) {
+            function build_base_url() {
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $script = $_SERVER['SCRIPT_NAME'] ?? '';
+                if (false !== ($pos = strpos($script, '/api/'))) {
+                    $projectBase = substr($script, 0, $pos);
+                } else {
+                    $projectBase = dirname(dirname(dirname($script)));
+                }
+                $projectBase = rtrim($projectBase, '/');
+                return $protocol . '://' . $host . ($projectBase ? $projectBase : '');
+            }
+        }
+
+        if (!function_exists('normalize_avatar_url')) {
+            function normalize_avatar_url($avatar) {
+                $avatar = trim((string)($avatar ?? ''));
+                if ($avatar === '') return '';
+                if (stripos($avatar, 'data:') === 0) return $avatar;
+
+                // scheme-relative
+                if (strpos($avatar, '//') === 0) {
+                    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https:' : 'http:';
+                    return $protocol . $avatar;
+                }
+
+                if (preg_match('#^https?://#i', $avatar)) return $avatar;
+
+                $lower = strtolower($avatar);
+                if (strpos($lower, 'googleusercontent.com') !== false || strpos($lower, 'lh3.googleusercontent.com') !== false || strpos($lower, 'zalo') !== false) {
+                    return (stripos($avatar, 'http') === 0) ? $avatar : 'https://' . ltrim($avatar, '/');
+                }
+
+                $avatar = ltrim($avatar, '/');
+                return rtrim(build_base_url(), '/') . '/' . $avatar;
+            }
+        }
+
         $users[] = [
             'id' => (int)$row['id'],
             'name' => $row['name'],
-            'avatar' => $row['avatar'],
+            'avatar' => normalize_avatar_url($row['avatar']),
         ];
     }
 

@@ -1,0 +1,40 @@
+Payload: Array
+(
+    [sub] => 16
+    [name] => Valt
+    [email] => user@gmail.com
+    [role] => user
+)
+
+JWT: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjE2LCJuYW1lIjoiVmFsdCIsImVtYWlsIjoidXNlckBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NjQ4Nzk5MiwiZXhwIjoxNzY3MDkyNzkyLCJpc3MiOiJWaWJlTWFya2V0In0.GFFq-If2ZRRJJO88D_Ni_ujSJsZ_z27I6ZKeNLje624
+Token saved to DB for user ID: 16
+Payload: Array
+(
+    [sub] => 16
+    [name] => Valt
+    [email] => user@gmail.com
+    [role] => user
+)
+
+JWT: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjE2LCJuYW1lIjoiVmFsdCIsImVtYWlsIjoidXNlckBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NjQ4ODE3NiwiZXhwIjoxNzY3MDkyOTc2LCJpc3MiOiJWaWJlTWFya2V0In0.lHdNy8GX4iBkQ-TsSxAtBw6tlo_e3hBHdSl0AngZ2aI
+Token saved to DB for user ID: 16
+Payload: Array
+(
+    [sub] => 16
+    [name] => Valt
+    [email] => user@gmail.com
+    [role] => user
+)
+
+JWT: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjE2LCJuYW1lIjoiVmFsdCIsImVtYWlsIjoidXNlckBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NjQ4ODg1NCwiZXhwIjoxNzY3MDkzNjU0LCJpc3MiOiJWaWJlTWFya2V0In0.kM7XqsBNpkQCGzJaAuVr9uoGW8DS09V5RsRPlvr_xs0
+Token saved to DB for user ID: 16
+Payload: Array
+(
+    [sub] => 1
+    [name] => Nguyễn Kỳ Vỹ
+    [email] => vynguyen12@gmail.com
+    [role] => user
+)
+
+JWT: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsIm5hbWUiOiJOZ3V5XHUxZWM1biBLXHUxZWYzIFZcdTFlZjkiLCJlbWFpbCI6InZ5bmd1eWVuMTJAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjY0OTQzODcsImV4cCI6MTc2NzA5OTE4NywiaXNzIjoiVmliZU1hcmtldCJ9.6cKea3TU4AmeEDnrNDNJeQMliBVa-CT9wrbU60XolM4
+Token saved to DB for user ID: 1

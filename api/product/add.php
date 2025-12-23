@@ -83,8 +83,8 @@ $sql = "INSERT INTO products (
     seller_name, seller_avatar, sku, description, category, brand, tags, 
     weight, length, width, height, material, cost, sale_price, sale_quantity, 
     meta_title, meta_description, slug, keywords, quantity, low_stock, 
-    shipping_fee, status, visibility, release_date, seller_id, colors, sizes, origin, flash_sale
-) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    shipping_fee, visibility, release_date, seller_id, colors, sizes, origin, flash_sale
+) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 $stmt = $conn->prepare($sql);
 
@@ -96,7 +96,7 @@ if (!$stmt) {
 
 // Bind params
 $stmt->bind_param(
-    "siisdiiisssssssidddsiiissssiiisssisssi",
+    "siisdiiisssssssidddsiiissssiiississsi",
     $data['name'],                       // s
     $data['price'],                      // i
     $data['originalPrice'],              // i
@@ -126,8 +126,7 @@ $stmt->bind_param(
     $data['keywords'],                   // s
     $data['quantity'],                   // i
     $data['low_stock'],                  // i
-    $data['shipping_fee'],               // i
-    $data['status'],                     // s
+    $data['shipping_fee'],               // s
     $data['visibility'],                 // s
     $data['release_date'],               // s (datetime dạng string: "2025-10-02 14:30:00")
     $data['seller_id'],                   // i

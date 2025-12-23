@@ -33,21 +33,71 @@ $itemRes = $conn->query("SELECT p.name, oi.price, oi.quantity, p.image, p.sku, o
     JOIN products p ON oi.product_id = p.id 
     LEFT JOIN seller s ON oi.seller_id = s.seller_id
     WHERE oi.order_id = {$order['id']}");
-while ($item = $itemRes->fetch_assoc()) {
-    // Xử lý lấy ảnh đầu tiên nếu image là JSON array
-    $img = $item['image'];
-    if ($img && ($img[0] === '[' || $img[0] === '{')) {
+
+// Helper: build base url including project folder (if API is served under /<project>/api/...)
+function build_base_url() {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+
+    // If script path contains '/api/', derive project base before that segment (e.g. '/VibeMarket-BE')
+    if (false !== ($pos = strpos($script, '/api/'))) {
+        $projectBase = substr($script, 0, $pos);
+    } else {
+        // fallback: go up three levels from current script path (api/order/file.php -> project root)
+        $projectBase = dirname(dirname(dirname($script)));
+    }
+
+    $projectBase = rtrim($projectBase, '/');
+    return $protocol . '://' . $host . ($projectBase ? $projectBase : '');
+}
+
+// Helper: normalize image field and return absolute URL to first image
+function normalize_image_url($img) {
+    $img = trim((string)($img ?? ''));
+    if ($img === '') return '';
+
+    // remove surrounding quotes/spaces
+    $img = trim($img, "\"' \t\n\r");
+
+    // If JSON array/object, decode and pick first element when possible
+    $first = null;
+    if (isset($img[0]) && ($img[0] === '[' || $img[0] === '{')) {
         $arr = json_decode($img, true);
         if (is_array($arr) && count($arr) > 0) {
-            $img = $arr[0];
+            $first = reset($arr);
         }
     }
-    $item['image'] = (strpos($img, 'http') === 0) ? $img : 'http://localhost/' . ltrim($img, '/');
-    
+
+    // If still empty and contains commas, split and take first
+    if ($first === null && strpos($img, ',') !== false) {
+        $parts = array_map('trim', explode(',', $img));
+        if (count($parts) > 0) $first = $parts[0];
+    }
+
+    // Otherwise use the string itself
+    if ($first === null) $first = $img;
+
+    $first = trim((string)$first, "\"' \t\n\r");
+    if ($first === '') return '';
+
+    // If already absolute url
+    if (strpos($first, 'http') === 0) return $first;
+
+    // Build absolute URL
+    $firstPath = ltrim($first, '/');
+    $base = build_base_url();
+    if ($base === '') return 'http://localhost/' . $firstPath;
+    return rtrim($base, '/') . '/' . $firstPath;
+}
+
+while ($item = $itemRes->fetch_assoc()) {
+    $item['image'] = normalize_image_url($item['image'] ?? '');
+
     // Convert seller_id and seller_user_id to integers
     $item['seller_id'] = $item['seller_id'] ? (int)$item['seller_id'] : null;
     $item['seller_user_id'] = $item['seller_user_id'] ? (int)$item['seller_user_id'] : null;
-    
+
     $items[] = $item;
 }
 

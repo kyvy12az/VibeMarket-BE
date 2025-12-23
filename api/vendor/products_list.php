@@ -1,5 +1,7 @@
 <?php
 require_once '../../config/database.php';
+require_once __DIR__ . '/../helpers/url.php';
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=utf-8");
 
@@ -12,38 +14,22 @@ if (!$user_id) {
     exit;
 }
 
-// Lấy seller_id từ user_id
+/* ================= GET SELLER ================= */
 $stmt = $conn->prepare("SELECT seller_id FROM seller WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $stmt->bind_result($seller_id);
+
 if (!$stmt->fetch()) {
     echo json_encode(['success' => false, 'error' => 'Không tìm thấy seller']);
     exit;
 }
 $stmt->close();
 
-// Helper function để xử lý product image URLs
-function getProductImageUrls($imageJson) {
-    $images = json_decode($imageJson, true);
-    if (!is_array($images)) {
-        return [];
-    }
-    
-    $backend_url = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/VIBE_MARKET_BACKEND/VibeMarket-BE';
-    
-    return array_map(function($img) use ($backend_url) {
-        if (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0) {
-            return $img;
-        }
-        if (strpos($img, 'uploads/') === 0) {
-            return $backend_url . '/' . $img;
-        }
-        return $backend_url . '/uploads/products/' . $img;
-    }, $images);
-}
+/* ================= BASE URL ================= */
+$baseUrl = getBaseUrl();
 
-// Lấy danh sách sản phẩm của seller với tính toán tồn kho thực tế
+/* ================= QUERY PRODUCTS ================= */
 $sql = "SELECT 
     p.id,
     p.name,
@@ -66,32 +52,51 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $products = [];
+
 while ($row = $result->fetch_assoc()) {
-    // Parse images từ JSON
-    $imageUrls = getProductImageUrls($row['image']);
-    $firstImage = !empty($imageUrls) ? $imageUrls[0] : null;
-    
-    // Tính tồn kho thực tế (không cho âm)
+
+    /* ===== HANDLE IMAGE (FULL URL) ===== */
+    $image = null;
+    $images = json_decode($row['image'], true);
+
+    if (is_array($images) && count($images) > 0) {
+        $img = $images[0];
+
+        // Nếu đã là full URL
+        if (preg_match('/^https?:\/\//', $img)) {
+            $image = $img;
+        }
+        // Nếu là absolute path: /uploads/...
+        elseif (strpos($img, '/') === 0) {
+            $image = $baseUrl . $img;
+        }
+        // Nếu chỉ là filename
+        else {
+            $image = $baseUrl . '/uploads/products/' . $img;
+        }
+    }
+
+    /* ===== STOCK & STATUS ===== */
     $actual_stock = max(0, (int)$row['stock']);
-    
-    // Xác định trạng thái
+
     $status = 'active';
-    if ($actual_stock == 0) {
+    if ($actual_stock === 0) {
         $status = 'out_of_stock';
-    } elseif ($row['status'] != 'active') {
+    } elseif ($row['status'] !== 'active') {
         $status = 'inactive';
     }
-    
+
+    /* ===== RESPONSE ===== */
     $products[] = [
         'id' => 'SP' . str_pad($row['id'], 3, '0', STR_PAD_LEFT),
         'name' => $row['name'],
         'category' => $row['category'] ?? 'Chưa phân loại',
         'price' => (int)$row['price'],
-        'initial_stock' => (int)$row['initial_stock'], // Tồn kho ban đầu
-        'stock' => $actual_stock, // Tồn kho hiện tại (initial - sold)
-        'sales' => (int)$row['sales'], // Số lượng đã bán
+        'initial_stock' => (int)$row['initial_stock'],
+        'stock' => $actual_stock,
+        'sales' => (int)$row['sales'],
         'rating' => (float)$row['rating'],
-        'image' => $firstImage,
+        'image' => $image, // ✅ FULL URL
         'status' => $status,
         'created_at' => $row['created_at']
     ];

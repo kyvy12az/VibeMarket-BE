@@ -142,6 +142,11 @@ if (!isset($result->error)) {
         ];
         $jwt = create_jwt($payload);
 
+        // Ghi log để kiểm tra token
+        file_put_contents('zalo_debug.log', "Payload: " . print_r($payload, true) . "\n", FILE_APPEND);
+        file_put_contents('zalo_debug.log', "JWT: " . $jwt . "\n", FILE_APPEND);
+        file_put_contents('zalo_debug.log', "Token saved to DB for user ID: " . $user_id . "\n", FILE_APPEND);
+
         // Lưu token vào DB
         $stmt = $conn->prepare("UPDATE users SET token = ? WHERE id = ?");
         $stmt->bind_param("si", $jwt, $user_id);

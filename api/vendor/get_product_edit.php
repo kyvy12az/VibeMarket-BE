@@ -26,23 +26,62 @@ if (!$stmt->fetch()) {
 $stmt->close();
 
 // Helper function để xử lý product image URLs
-function getProductImageUrls($imageJson) {
-    $images = json_decode($imageJson, true);
-    if (!is_array($images)) {
-        return [];
+function getProductImageUrls($imageField) {
+    // Build base URL dynamically (include project base when API under /<project>/api/...)
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    if (false !== ($pos = strpos($script, '/api/'))) {
+        $projectBase = substr($script, 0, $pos);
+    } else {
+        $projectBase = dirname(dirname(dirname($script)));
     }
-    
-    $backend_url = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/VIBE_MARKET_BACKEND/VibeMarket-BE';
-    
-    return array_map(function($img) use ($backend_url) {
-        if (strpos($img, 'http://') === 0 || strpos($img, 'https://') === 0) {
-            return $img;
+    $projectBase = rtrim($projectBase, '/');
+    $baseUrl = $protocol . '://' . $host . ($projectBase ? $projectBase : '');
+
+    $field = trim((string)($imageField ?? ''));
+    if ($field === '') return [];
+
+    $images = [];
+
+    // Try decode JSON first
+    $decoded = json_decode($field, true);
+    if (is_array($decoded)) {
+        $images = $decoded;
+    } else {
+        // Not JSON: if contains commas, treat as CSV list
+        if (strpos($field, ',') !== false) {
+            $parts = array_map('trim', explode(',', $field));
+            $images = array_filter($parts, fn($v) => $v !== '');
+        } else {
+            // Single path string
+            $images = [$field];
         }
-        if (strpos($img, 'uploads/') === 0) {
-            return $backend_url . '/' . $img;
+    }
+
+    // Normalize each image to absolute URL
+    $normalized = [];
+    foreach ($images as $img) {
+        $img = trim((string)$img, " \t\n\r\"'");
+        if ($img === '') continue;
+        // If already absolute
+        if (stripos($img, 'http://') === 0 || stripos($img, 'https://') === 0) {
+            $normalized[] = $img;
+            continue;
         }
-        return $backend_url . '/uploads/products/' . $img;
-    }, $images);
+
+        // If starts with uploads/ or contains /uploads/, keep path under project base
+        if (strpos($img, 'uploads/') === 0 || strpos($img, '/uploads/') !== false) {
+            $path = ltrim($img, '/');
+            $normalized[] = rtrim($baseUrl, '/') . '/' . $path;
+            continue;
+        }
+
+        // Otherwise assume it's a filename stored under uploads/products/
+        $normalized[] = rtrim($baseUrl, '/') . '/uploads/products/' . ltrim($img, '/');
+    }
+
+    return $normalized;
 }
 
 // Lấy thông tin sản phẩm

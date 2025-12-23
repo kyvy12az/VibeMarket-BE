@@ -148,6 +148,22 @@ class SellersController extends Controller
         }
 
         if ($this->sellerModel->updateStatus($seller_id, $new_status)) {
+            // If the status is approved, update the user's role to 'seller'
+            if ($new_status === 'approved') {
+                $user_id = $this->sellerModel->getUserIdBySellerId($seller_id);
+                if ($user_id) {
+                    $this->sellerModel->updateUserRole($user_id, 'seller');
+                }
+            }
+
+            // If the status is rejected, update the user's role to 'user'
+            if ($new_status === 'rejected') {
+                $user_id = $this->sellerModel->getUserIdBySellerId($seller_id);
+                if ($user_id) {
+                    $this->sellerModel->updateUserRole($user_id, 'user');
+                }
+            }
+
             $this->json(['success' => true, 'message' => 'Cập nhật trạng thái thành công', 'new_status' => $new_status]);
         } else {
             $this->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);

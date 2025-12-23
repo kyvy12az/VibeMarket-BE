@@ -16,6 +16,25 @@ $seller_address = isset($data['seller_address']) ? trim($data['seller_address'])
 $customer_address = isset($data['customer_address']) ? trim($data['customer_address']) : '';
 $shipping_method = isset($data['shipping_method']) ? $data['shipping_method'] : 'standard'; // 'standard' or 'express'
 
+// Nếu frontend không gửi `seller_address`, cho phép gửi `seller_id` và lấy địa chỉ từ DB
+$seller_id = isset($data['seller_id']) ? intval($data['seller_id']) : null;
+if (empty($seller_address) && $seller_id) {
+    try {
+        $stmt = $conn->prepare("SELECT business_address FROM seller WHERE seller_id = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("i", $seller_id);
+            $stmt->execute();
+            $stmt->bind_result($bizAddr);
+            if ($stmt->fetch()) {
+                $seller_address = trim($bizAddr);
+            }
+            $stmt->close();
+        }
+    } catch (Exception $e) {
+        error_log("Lỗi khi lấy business_address từ DB cho seller_id={$seller_id}: " . $e->getMessage());
+    }
+}
+
 error_log("Seller Address: " . $seller_address);
 error_log("Customer Address: " . $customer_address);
 

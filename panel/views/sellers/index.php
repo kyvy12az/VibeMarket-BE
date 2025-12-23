@@ -192,6 +192,24 @@ function editSeller(id) {
     window.location.href = '<?php echo $this->baseUrl('sellers/edit/'); ?>' + id;
 }
 
+
+function updateStats(stats) {
+    // Update statistics cards with animation
+    const cards = [
+        { selector: '.col-md-3:nth-child(1) h3', value: stats.total, label: 'Tổng cửa hàng' },
+        { selector: '.col-md-3:nth-child(2) h3', value: stats.approved, label: 'Đã duyệt' },
+        { selector: '.col-md-3:nth-child(3) h3', value: stats.pending, label: 'Chờ duyệt' },
+        { selector: '.col-md-3:nth-child(4) h3', value: stats.blocked, label: 'Bị khóa' }
+    ];
+    
+    cards.forEach(card => {
+        const element = $(card.selector);
+        element.fadeOut(300, function() {
+            $(this).text(new Intl.NumberFormat('vi-VN').format(card.value)).fadeIn(300);
+        });
+    });
+}
+
 function updateSellerStatus(sellerId, status) {
     const statusLabels = {
         'approved': 'duyệt',
@@ -199,7 +217,7 @@ function updateSellerStatus(sellerId, status) {
         'pending': 'đặt lại thành chờ duyệt',
         'blocked': 'khóa'
     };
-    
+
     Swal.fire({
         title: 'Xác nhận?',
         text: `Bạn có chắc muốn ${statusLabels[status]} cửa hàng này?`,
@@ -224,24 +242,22 @@ function updateSellerStatus(sellerId, status) {
                     if (response.success) {
                         Swal.fire({
                             title: 'Thành công!',
-                            text: response.message || 'Cập nhật trạng thái thành công',
+                            text: response.message,
                             icon: 'success',
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            // Reload table
-                            $('#sellers-table').DataTable().ajax.reload();
-                            // Reload stats if available
-                            $.get('<?php echo $this->baseUrl('sellers/getStats'); ?>', function(statsResponse) {
-                                if (statsResponse.success && statsResponse.stats) {
-                                    updateStats(statsResponse.stats);
-                                }
-                            });
+                            confirmButtonText: 'Đóng'
                         });
+
+                        // Reload the table
+                        $('#sellers-table').DataTable().ajax.reload();
+
+                        // Update statistics cards dynamically
+                        if (response.stats) {
+                            updateStats(response.stats);
+                        }
                     } else {
                         Swal.fire({
                             title: 'Lỗi!',
-                            text: response.message || 'Có lỗi xảy ra',
+                            text: response.message,
                             icon: 'error',
                             confirmButtonText: 'Đóng'
                         });
@@ -250,7 +266,7 @@ function updateSellerStatus(sellerId, status) {
                 error: function(xhr) {
                     Swal.fire({
                         title: 'Lỗi!',
-                        text: 'Không thể kết nối đến server',
+                        text: 'Không thể cập nhật trạng thái. Vui lòng thử lại.',
                         icon: 'error',
                         confirmButtonText: 'Đóng'
                     });
@@ -260,20 +276,4 @@ function updateSellerStatus(sellerId, status) {
     });
 }
 
-function updateStats(stats) {
-    // Update statistics cards with animation
-    const cards = [
-        { selector: '.col-md-3:nth-child(1) h3', value: stats.total },
-        { selector: '.col-md-3:nth-child(2) h3', value: stats.approved },
-        { selector: '.col-md-3:nth-child(3) h3', value: stats.pending },
-        { selector: '.col-md-3:nth-child(4) h3', value: stats.blocked }
-    ];
-    
-    cards.forEach(card => {
-        const element = $(card.selector);
-        element.fadeOut(300, function() {
-            $(this).text(new Intl.NumberFormat('vi-VN').format(card.value)).fadeIn(300);
-        });
-    });
-}
 </script>

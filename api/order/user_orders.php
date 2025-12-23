@@ -28,16 +28,47 @@ while ($row = $res->fetch_assoc()) {
         JOIN products p ON oi.product_id = p.id 
         WHERE oi.order_id = {$row['id']}");
     while ($item = $itemRes->fetch_assoc()) {
-        // Nếu image là JSON array, lấy ảnh đầu tiên
-        $img = $item['image'];
-        if ($img && ($img[0] === '[' || $img[0] === '{')) {
-            $arr = json_decode($img, true);
-            if (is_array($arr) && count($arr) > 0) {
-                $img = $arr[0];
+        // Xử lý field image: có thể là JSON array, chuỗi phân tách bởi dấu phẩy, hoặc đường dẫn đơn
+        $raw = $item['image'];
+        $img = '';
+
+        if ($raw) {
+            $trim = trim($raw);
+            // JSON array hoặc object
+            if (isset($trim[0]) && ($trim[0] === '[' || $trim[0] === '{')) {
+                $arr = json_decode($trim, true);
+                if (is_array($arr) && count($arr) > 0) {
+                    // lấy phần tử đầu tiên nếu là danh sách
+                    $first = reset($arr);
+                    if (is_string($first) && $first !== '') $img = $first;
+                }
+            }
+            // Nếu chưa có ảnh, thử tách bằng dấu phẩy (CSV)
+            if ($img === '' && strpos($trim, ',') !== false) {
+                $parts = explode(',', $trim);
+                $candidate = trim($parts[0], " \"'\\");
+                if ($candidate !== '') $img = $candidate;
+            }
+            // Nếu vẫn chưa, dùng nguyên giá trị (có thể là đường dẫn đơn)
+            if ($img === '') {
+                $img = trim($trim, " \"'\\");
             }
         }
-        // Đảm bảo trả về ảnh đầy đủ domain
-        $item['image'] = (strpos($img, 'http') === 0) ? $img : 'http://localhost/' . ltrim($img, '/');
+
+        // Build absolute URL using current host and project base (handles dev folder like /VibeMarket-BE/)
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        // Derive project base from script path (e.g. /VibeMarket-BE/)
+        $scriptDir = dirname($_SERVER['SCRIPT_NAME']); // e.g. /VibeMarket-BE/api/order
+        $projectBaseDir = dirname(dirname($scriptDir)); // e.g. /VibeMarket-BE
+        if ($projectBaseDir === DIRECTORY_SEPARATOR) $projectBaseDir = '/';
+        $base = $protocol . $host . rtrim($projectBaseDir, '/') . '/';
+
+        if (!$img) {
+            $item['image'] = $base . 'placeholder.svg';
+        } else {
+            $item['image'] = (stripos($img, 'http') === 0) ? $img : $base . ltrim($img, '/');
+        }
         $items[] = $item;
     }
     $orders[] = [

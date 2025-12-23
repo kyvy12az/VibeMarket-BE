@@ -68,13 +68,60 @@ try {
     
     $products = [];
     while ($row = $result->fetch_assoc()) {
-        // Parse JSON image array và lấy ảnh đầu tiên
+        // Normalize product image and pick the first image (support JSON array, CSV, or single path)
         $image_url = '';
         if (!empty($row['product_image'])) {
-            $images = json_decode($row['product_image'], true);
-            if (is_array($images) && count($images) > 0) {
-                $image_url = $images[0];
+            // Helper: build base url including project folder when served under /<project>/api/...
+            if (!function_exists('build_base_url')) {
+                function build_base_url() {
+                    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
+                    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+
+                    if (false !== ($pos = strpos($script, '/api/'))) {
+                        $projectBase = substr($script, 0, $pos);
+                    } else {
+                        $projectBase = dirname(dirname(dirname($script)));
+                    }
+
+                    $projectBase = rtrim($projectBase, '/');
+                    return $protocol . '://' . $host . ($projectBase ? $projectBase : '');
+                }
             }
+
+            if (!function_exists('normalize_image_url')) {
+                function normalize_image_url($img) {
+                    $img = trim((string)($img ?? ''));
+                    if ($img === '') return '';
+                    $img = trim($img, "\"' \t\n\r");
+
+                    $first = null;
+                    if (isset($img[0]) && ($img[0] === '[' || $img[0] === '{')) {
+                        $arr = json_decode($img, true);
+                        if (is_array($arr) && count($arr) > 0) {
+                            $first = reset($arr);
+                        }
+                    }
+
+                    if ($first === null && strpos($img, ',') !== false) {
+                        $parts = array_map('trim', explode(',', $img));
+                        if (count($parts) > 0) $first = $parts[0];
+                    }
+
+                    if ($first === null) $first = $img;
+                    $first = trim((string)$first, "\"' \t\n\r");
+                    if ($first === '') return '';
+
+                    if (strpos($first, 'http') === 0) return $first;
+
+                    $firstPath = ltrim($first, '/');
+                    $base = build_base_url();
+                    if ($base === '') return 'http://localhost/' . $firstPath;
+                    return rtrim($base, '/') . '/' . $firstPath;
+                }
+            }
+
+            $image_url = normalize_image_url($row['product_image']);
         }
         
         $products[] = [

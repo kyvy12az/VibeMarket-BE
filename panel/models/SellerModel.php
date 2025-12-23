@@ -193,4 +193,18 @@ class SellerModel extends Model
                 LIMIT ?";
         return $this->fetchAll($sql, [$sellerId, $limit]);
     }
+
+    public function getUserIdBySellerId($sellerId)
+    {
+        $sql = "SELECT user_id FROM {$this->table} WHERE seller_id = ?";
+        $result = $this->fetchOne($sql, [$sellerId]);
+        return $result ? $result['user_id'] : null;
+    }
+
+    public function updateUserRole($userId, $role)
+    {
+        $sql = "UPDATE users SET role = ? WHERE id = ?";
+        $stmt = $this->query($sql, [$role, $userId]);
+        return $stmt !== false;
+    }
 }

@@ -46,6 +46,10 @@ $payload = [
 ];
 $jwt = create_jwt($payload);
 
+// Thêm ghi log để kiểm tra token
+file_put_contents('debug_login.log', "Payload: " . print_r($payload, true) . "\n", FILE_APPEND);
+file_put_contents('debug_login.log', "JWT: " . $jwt . "\n", FILE_APPEND);
+
 // Lưu token vào DB và update provider nếu chưa có
 if (empty($provider)) {
     $stmt_update = $conn->prepare("UPDATE users SET token = ?, provider = 'local' WHERE id = ?");
@@ -57,6 +61,9 @@ if (empty($provider)) {
 }
 $stmt_update->execute();
 $stmt_update->close();
+
+// Ghi log sau khi lưu token vào DB
+file_put_contents('debug_login.log', "Token saved to DB for user ID: " . $id . "\n", FILE_APPEND);
 
 echo json_encode([
     'success' => true,
